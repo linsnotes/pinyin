@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PinMark</title>
+  <meta name="description" content="Convert Markdown-formatted Chinese text to Chinese characters with Hanyu Pinyin above them.">
+  <style>
+    :root {
+      --hanzi-size: 24px;
+      --pinyin-size: 14px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .input-section, .output-section {
+      flex: 1;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      overflow: auto;
+    }
+
+    .input-section.fullscreen-hidden {
+      display: none;
+    }
+    .output-section.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+    }
+
+    textarea {
+      width: 100%;
+      height: 70%;
+      padding: 10px;
+      margin-bottom: 10px;
+      resize: vertical;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .controls label {
+      font-size: 14px;
+    }
+
+    .hanzi-pinyin {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 2px;
+      line-height: 1.2;
+    }
+    .pinyin {
+      font-size: var(--pinyin-size);
+      color: #666;
+    }
+    .hanzi {
+      font-size: var(--hanzi-size);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .input-section, .output-section {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Input Section -->
+    <div class="input-section">
+      <button id="toggleInput">Hide Input</button>
+      <textarea placeholder="Enter Markdown-formatted Chinese text here..."></textarea>
+      <div class="controls">
+        <div>
+          <label for="hanziSize">Hanzi Size: </label>
+          <input type="range" id="hanziSize" min="12" max="48" value="24">
+          <span id="hanziSizeValue">24px</span>
+        </div>
+        <div>
+          <label for="pinyinSize">Pinyin Size: </label>
+          <input type="range" id="pinyinSize" min="10" max="24" value="14">
+          <span id="pinyinSizeValue">14px</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Output Section -->
+    <div class="output-section"></div>
+  </div>
+
+  <!-- Marked.js for Markdown processing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- pinyin‑pro library from unpkg -->
+  <script src="https://unpkg.com/pinyin-pro"></script>
+  <script>
+    // DOM Elements
+    const inputSection = document.querySelector('.input-section');
+    const outputSection = document.querySelector('.output-section');
+    const textarea = document.querySelector('textarea');
+    const toggleInput = document.getElementById('toggleInput');
+    const hanziSizeInput = document.getElementById('hanziSize');
+    const pinyinSizeInput = document.getElementById('pinyinSize');
+    const hanziSizeValue = document.getElementById('hanziSizeValue');
+    const pinyinSizeValue = document.getElementById('pinyinSizeValue');
+
+    // Debounce function to optimize processing frequency
+    function debounce(func, delay) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    // Update font sizes according to slider values
+    function updateFontSizes() {
+      document.documentElement.style.setProperty('--hanzi-size', hanziSizeInput.value + 'px');
+      document.documentElement.style.setProperty('--pinyin-size', pinyinSizeInput.value + 'px');
+      hanziSizeValue.textContent = hanziSizeInput.value + 'px';
+      pinyinSizeValue.textContent = pinyinSizeInput.value + 'px';
+    }
+    hanziSizeInput.addEventListener('input', updateFontSizes);
+    pinyinSizeInput.addEventListener('input', updateFontSizes);
+
+    // Toggle the visibility of the input section for fullscreen output view
+    toggleInput.addEventListener('click', () => {
+      inputSection.classList.toggle('fullscreen-hidden');
+      outputSection.classList.toggle('fullscreen');
+      toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden') ? 'Show Input' : 'Hide Input';
+    });
+
+    // Process the input text: convert Markdown, get pinyin data, and render output
+    async function processText() {
+      const rawText = textarea.value;
+      if (!rawText.trim()) {
+        outputSection.innerHTML = '';
+        return;
+      }
+
+      outputSection.innerHTML = '<p>Processing...</p>';
+
+      try {
+        // Convert Markdown to HTML using marked.js
+        const htmlContent = marked.parse(rawText);
+
+        // Get pinyin data using the pinyin‑pro library (synchronous)
+        const pinyinData = getPinyinData(rawText);
+
+        // Create a temporary container to hold the rendered HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+
+        // Process all text nodes to inject pinyin above Chinese characters
+        processTextNodes(tempDiv, pinyinData);
+
+        outputSection.innerHTML = '';
+        outputSection.appendChild(tempDiv);
+      } catch (error) {
+        console.error('Error processing text:', error);
+        outputSection.innerHTML = '<p style="color:red;">Error processing text. Please try again.</p>';
+      }
+    }
+
+    // Get pinyin data using the pinyin‑pro library.
+    // For each Chinese character, obtain its pinyin with tone marks.
+    function getPinyinData(text) {
+      const result = [];
+      for (const char of text) {
+        if (isHanzi(char)) {
+          // Use the pinyin‑pro library function.
+          // Options: toneType 'symbol' (for tone marks) and type 'string' (single string output).
+          const py = pinyin(char, { toneType: 'symbol', type: 'string' });
+          result.push({ hanzi: char, pinyin: py });
+        }
+      }
+      return result;
+    }
+
+    // Walk through text nodes and wrap each Chinese character with its corresponding pinyin
+    function processTextNodes(node, pinyinData) {
+      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
+      let pinyinIndex = 0;
+      let currentNode;
+
+      while (currentNode = walker.nextNode()) {
+        const text = currentNode.nodeValue;
+        const fragment = document.createDocumentFragment();
+
+        for (const char of text) {
+          if (isHanzi(char) && pinyinIndex < pinyinData.length) {
+            const spanWrapper = document.createElement('span');
+            spanWrapper.className = 'hanzi-pinyin';
+            spanWrapper.innerHTML = `<span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span><span class="hanzi">${char}</span>`;
+            fragment.appendChild(spanWrapper);
+            pinyinIndex++;
+          } else {
+            fragment.appendChild(document.createTextNode(char));
+          }
+        }
+        currentNode.parentNode.replaceChild(fragment, currentNode);
+      }
+    }
+
+    // Utility: Check whether a character is a Chinese Hanzi
+    function isHanzi(char) {
+      return /[\u4e00-\u9fa5]/.test(char);
+    }
+
+    // Initialize textarea input with debounced processing
+    textarea.addEventListener('input', debounce(processText, 300));
+    updateFontSizes();
+  </script>
+</body>
+</html>
