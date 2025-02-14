@@ -1,251 +1,59 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chinese Pinyin Converter</title>
-  <meta name="description" content="Convert Markdown-formatted Chinese text to Chinese characters with Hanyu Pinyin above them.">
-  <style>
-    /* Define CSS variables for font sizes */
-    :root {
-      --hanzi-size: 24px;
-      --pinyin-size: 14px;
-    }
-
-    /* Reset & Box Sizing */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Main container */
-    .container {
-      flex: 1;
-      display: flex;
-      gap: 20px;
-      padding: 20px;
-    }
-
-    /* Input and output sections */
-    .input-section, .output-section {
-      flex: 1;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      overflow: auto;
-    }
-
-    /* Fullscreen adjustments */
-    .input-section.fullscreen-hidden {
-      display: none;
-    }
-    .output-section.fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 1000;
-    }
-
-    /* Textarea styling */
-    textarea {
-      width: 100%;
-      height: 70%;
-      padding: 10px;
-      margin-bottom: 10px;
-      resize: vertical;
-    }
-
-    /* Controls for adjusting font sizes */
-    .controls {
-      margin-top: 20px;
-      display: flex;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    .controls label {
-      font-size: 14px;
-    }
-
-    /* Override styles for pinyin-pro generated HTML */
-    .py-result-item {
-      display: inline-block;
-      margin: 2px;
-    }
-    .py-result-item ruby {
-      text-align: center;
-    }
-    .py-pinyin-item {
-      font-size: var(--pinyin-size);
-      color: #666;
-      display: block;
-      line-height: 1.2;
-    }
-    .py-chinese-item {
-      font-size: var(--hanzi-size);
-      display: block;
-    }
-
-    /* Responsive adjustments for mobile */
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-      .input-section, .output-section {
-        width: 100%;
-        height: auto;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Pinyin Pro API Test</title>
+    <script src="https://unpkg.com/pinyin-pro"></script>
 </head>
 <body>
-  <div class="container">
-    <!-- Input Section -->
-    <div class="input-section">
-      <button id="toggleInput">Hide Input</button>
-      <textarea placeholder="Enter Markdown-formatted Chinese text here..."></textarea>
-      <div class="controls">
-        <div>
-          <label for="hanziSize">Hanzi Size: </label>
-          <input type="range" id="hanziSize" min="12" max="48" value="24">
-          <span id="hanziSizeValue">24px</span>
-        </div>
-        <div>
-          <label for="pinyinSize">Pinyin Size: </label>
-          <input type="range" id="pinyinSize" min="10" max="24" value="14">
-          <span id="pinyinSizeValue">14px</span>
-        </div>
-      </div>
-    </div>
+    <h1>Pinyin Pro API Test</h1>
+    <label for="inputText">Enter Chinese text:</label>
+    <input type="text" id="inputText" placeholder="输入中文">
+    <br><br>
+    <label for="optionSelect">Select an option:</label>
+    <select id="optionSelect">
+        <option value="pinyin">Pinyin (default)</option>
+        <option value="initial">Initials</option>
+        <option value="final">Finals</option>
+        <option value="finalHead">Final Head</option>
+        <option value="finalBody">Final Body</option>
+        <option value="finalTail">Final Tail</option>
+        <option value="num">Tone Numbers</option>
+        <option value="first">First Letters</option>
+    </select>
+    <br><br>
+    <label for="toneTypeSelect">Select tone type:</label>
+    <select id="toneTypeSelect">
+        <option value="symbol">Symbol (default)</option>
+        <option value="none">None</option>
+        <option value="num">Number</option>
+    </select>
+    <br><br>
+    <label for="outputTypeSelect">Select output type:</label>
+    <select id="outputTypeSelect">
+        <option value="string">String (default)</option>
+        <option value="array">Array</option>
+    </select>
+    <br><br>
+    <label for="vOption">Replace 'ü' with 'v':</label>
+    <input type="checkbox" id="vOption">
+    <br><br>
+    <button onclick="convertPinyin()">Convert</button>
+    <h2>Output:</h2>
+    <pre id="output"></pre>
 
-    <!-- Output Section -->
-    <div class="output-section">
-      <!-- Processed output will appear here -->
-    </div>
-  </div>
+    <script>
+        function convertPinyin() {
+            const inputText = document.getElementById('inputText').value;
+            const pattern = document.getElementById('optionSelect').value;
+            const toneType = document.getElementById('toneTypeSelect').value;
+            const type = document.getElementById('outputTypeSelect').value;
+            const v = document.getElementById('vOption').checked;
 
-  <!-- Marked.js for Markdown processing -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- pinyin-pro: loads the library and its functions (like html and pinyin) -->
-  <script src="https://unpkg.com/pinyin-pro"></script>
-  <script>
-    // Get DOM elements
-    const inputSection = document.querySelector('.input-section');
-    const outputSection = document.querySelector('.output-section');
-    const textarea = document.querySelector('textarea');
-    const toggleInput = document.getElementById('toggleInput');
-    const hanziSizeInput = document.getElementById('hanziSize');
-    const pinyinSizeInput = document.getElementById('pinyinSize');
-    const hanziSizeValue = document.getElementById('hanziSizeValue');
-    const pinyinSizeValue = document.getElementById('pinyinSizeValue');
-
-    // Debounce to limit how often processing occurs during typing
-    function debounce(func, delay) {
-      let timeout;
-      return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), delay);
-      };
-    }
-
-    // Update CSS variables and displayed values when sliders change
-    function updateFontSizes() {
-      document.documentElement.style.setProperty('--hanzi-size', hanziSizeInput.value + 'px');
-      document.documentElement.style.setProperty('--pinyin-size', pinyinSizeInput.value + 'px');
-      hanziSizeValue.textContent = hanziSizeInput.value + 'px';
-      pinyinSizeValue.textContent = pinyinSizeInput.value + 'px';
-    }
-    hanziSizeInput.addEventListener('input', updateFontSizes);
-    pinyinSizeInput.addEventListener('input', updateFontSizes);
-
-    // Toggle input section for fullscreen output view
-    toggleInput.addEventListener('click', () => {
-      inputSection.classList.toggle('fullscreen-hidden');
-      outputSection.classList.toggle('fullscreen');
-      toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
-        ? 'Show Input'
-        : 'Hide Input';
-    });
-
-    // Process the input text: convert Markdown, then inject pinyin for Chinese characters
-    function processText() {
-      const rawText = textarea.value;
-      if (!rawText.trim()) {
-        outputSection.innerHTML = '';
-        return;
-      }
-      // Display a loading indicator
-      outputSection.innerHTML = '<p>Processing...</p>';
-
-      try {
-        // 1. Convert Markdown to HTML using marked.js
-        const markdownHTML = marked.parse(rawText);
-        // 2. Create a temporary container for the converted HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = markdownHTML;
-
-        // 3. Traverse text nodes in tempDiv and replace Chinese characters with pinyin-enhanced HTML
-        processTextNodes(tempDiv);
-
-        // 4. Update the output section with the processed content
-        outputSection.innerHTML = '';
-        outputSection.appendChild(tempDiv);
-      } catch (error) {
-        console.error('Error processing text:', error);
-        outputSection.innerHTML = '<p style="color:red;">Error processing text. Please try again.</p>';
-      }
-    }
-
-    // For each text node, check for Chinese characters and replace them using pinyin-pro's html() function.
-    function processTextNodes(node) {
-      const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
-      let currentNode;
-      while (currentNode = walker.nextNode()) {
-        const text = currentNode.nodeValue;
-        // If there is no Chinese character, leave the node as is.
-        if (!/[一-龥]/.test(text)) continue;
-
-        const fragment = document.createDocumentFragment();
-        // Process each character individually.
-        for (const char of text) {
-          if (/[一-龥]/.test(char)) {
-            // Use pinyin-pro's html() function to get the HTML with pinyin.
-            // (For a single Chinese character, this returns a structure like:
-            // <span class="py-result-item"><ruby>
-            //   <span class="py-chinese-item">汉</span>
-            //   <rp>(</rp><rt class="py-pinyin-item">hàn</rt><rp>)</rp>
-            // </ruby></span>
-            // )
-            const pinyinHTML = html(char);
-            // Create a temporary container to parse the returned HTML string.
-            const tempSpan = document.createElement('span');
-            tempSpan.innerHTML = pinyinHTML;
-            while (tempSpan.firstChild) {
-              fragment.appendChild(tempSpan.firstChild);
-            }
-          } else {
-            fragment.appendChild(document.createTextNode(char));
-          }
+            const options = { pattern, toneType, type, v };
+            const result = pinyinPro.pinyin(inputText, options);
+            document.getElementById('output').textContent = JSON.stringify(result, null, 2);
         }
-        // Replace the original text node with our new fragment.
-        currentNode.parentNode.replaceChild(fragment, currentNode);
-      }
-    }
-
-    // Listen for input events (debounced) to process text
-    textarea.addEventListener('input', debounce(processText, 300));
-
-    // Set the initial font sizes when the page loads
-    updateFontSizes();
-  </script>
+    </script>
 </body>
 </html>
