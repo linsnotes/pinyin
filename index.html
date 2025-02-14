@@ -1,59 +1,203 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Pinyin Pro API Test</title>
-    <script src="https://unpkg.com/pinyin-pro"></script>
+  <meta charset="UTF-8">
+  <title>Pinyin Pro API Test - Full Options</title>
+  <!-- Include the pinyin-pro library -->
+  <script src="https://unpkg.com/pinyin-pro"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    .option-group {
+      margin-bottom: 10px;
+    }
+    label {
+      display: inline-block;
+      width: 220px;
+      vertical-align: top;
+    }
+    input[type="text"], select {
+      width: 300px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+  </style>
 </head>
 <body>
-    <h1>Pinyin Pro API Test</h1>
+  <h1>Pinyin Pro API Test - Full Options</h1>
+  
+  <!-- Input text -->
+  <div class="option-group">
     <label for="inputText">Enter Chinese text:</label>
     <input type="text" id="inputText" placeholder="输入中文">
-    <br><br>
-    <label for="optionSelect">Select an option:</label>
-    <select id="optionSelect">
-        <option value="pinyin">Pinyin (default)</option>
-        <option value="initial">Initials</option>
-        <option value="final">Finals</option>
-        <option value="finalHead">Final Head</option>
-        <option value="finalBody">Final Body</option>
-        <option value="finalTail">Final Tail</option>
-        <option value="num">Tone Numbers</option>
-        <option value="first">First Letters</option>
+  </div>
+  
+  <!-- BasicOptions Controls -->
+  <div class="option-group">
+    <label for="typeSelect">Output Type (type):</label>
+    <select id="typeSelect">
+      <option value="string" selected>string</option>
+      <option value="array">array</option>
+      <option value="all">all</option>
     </select>
-    <br><br>
-    <label for="toneTypeSelect">Select tone type:</label>
+  </div>
+  
+  <div class="option-group">
+    <label for="toneTypeSelect">Tone Type (toneType):</label>
     <select id="toneTypeSelect">
-        <option value="symbol">Symbol (default)</option>
-        <option value="none">None</option>
-        <option value="num">Number</option>
+      <option value="symbol" selected>symbol</option>
+      <option value="num">num</option>
+      <option value="none">none</option>
     </select>
-    <br><br>
-    <label for="outputTypeSelect">Select output type:</label>
-    <select id="outputTypeSelect">
-        <option value="string">String (default)</option>
-        <option value="array">Array</option>
+  </div>
+  
+  <div class="option-group">
+    <label for="patternSelect">Pattern (pattern):</label>
+    <select id="patternSelect">
+      <option value="pinyin" selected>pinyin</option>
+      <option value="initial">initial</option>
+      <option value="final">final</option>
+      <option value="num">num</option>
+      <option value="first">first</option>
+      <option value="finalHead">finalHead</option>
+      <option value="finalBody">finalBody</option>
+      <option value="finalTail">finalTail</option>
     </select>
-    <br><br>
-    <label for="vOption">Replace 'ü' with 'v':</label>
-    <input type="checkbox" id="vOption">
-    <br><br>
+  </div>
+  
+  <div class="option-group">
+    <label for="multipleCheckbox">Multiple (multiple):</label>
+    <input type="checkbox" id="multipleCheckbox">
+  </div>
+  
+  <div class="option-group">
+    <label for="removeNonZhCheckbox">Remove Non-Chinese (removeNonZh):</label>
+    <input type="checkbox" id="removeNonZhCheckbox">
+  </div>
+  
+  <div class="option-group">
+    <label for="nonZhSelect">Non-Chinese Output (nonZh):</label>
+    <select id="nonZhSelect">
+      <option value="spaced" selected>spaced</option>
+      <option value="consecutive">consecutive</option>
+      <option value="removed">removed</option>
+    </select>
+  </div>
+  
+  <div class="option-group">
+    <label for="vCheckbox">Replace 'ü' with 'v' (v):</label>
+    <input type="checkbox" id="vCheckbox">
+  </div>
+  
+  <!-- Additional Options -->
+  <div class="option-group">
+    <label for="segmentitSelect">Tokenization Algorithm (segmentit):</label>
+    <select id="segmentitSelect">
+      <option value="">None</option>
+      <option value="1">ReverseMaxMatch (1)</option>
+      <option value="2">MaxProbability (2)</option>
+      <option value="3">MinTokenization (3)</option>
+    </select>
+  </div>
+  
+  <div class="option-group">
+    <label for="surnameSelect">Surname Mode (surname):</label>
+    <select id="surnameSelect">
+      <option value="off" selected>off</option>
+      <option value="head">head</option>
+      <option value="all">all</option>
+    </select>
+  </div>
+  
+  <div class="option-group">
+    <label for="modeSelect">Deprecated Mode (mode):</label>
+    <select id="modeSelect">
+      <option value="normal" selected>normal</option>
+      <option value="surname">surname</option>
+    </select>
+  </div>
+  
+  <div class="option-group">
+    <label for="toneSandhiCheckbox">Tone Sandhi (toneSandhi):</label>
+    <input type="checkbox" id="toneSandhiCheckbox">
+  </div>
+  
+  <div class="option-group">
+    <label for="nonZhScopeInput">Non-Chinese Scope Regex (nonZhScope):</label>
+    <input type="text" id="nonZhScopeInput" placeholder="e.g., [a-zA-Z]+">
+  </div>
+  
+  <div class="option-group">
+    <label for="separatorInput">Separator (separator):</label>
+    <input type="text" id="separatorInput" placeholder="e.g., -">
+  </div>
+  
+  <div class="option-group">
     <button onclick="convertPinyin()">Convert</button>
-    <h2>Output:</h2>
-    <pre id="output"></pre>
-
-    <script>
-        function convertPinyin() {
-            const inputText = document.getElementById('inputText').value;
-            const pattern = document.getElementById('optionSelect').value;
-            const toneType = document.getElementById('toneTypeSelect').value;
-            const type = document.getElementById('outputTypeSelect').value;
-            const v = document.getElementById('vOption').checked;
-
-            const options = { pattern, toneType, type, v };
-            const result = pinyinPro.pinyin(inputText, options);
-            document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+  </div>
+  
+  <h2>Output:</h2>
+  <pre id="output"></pre>
+  
+  <script>
+    function convertPinyin() {
+      const inputText = document.getElementById('inputText').value;
+      const options = {};
+      
+      // Basic options
+      options.type = document.getElementById('typeSelect').value;
+      options.toneType = document.getElementById('toneTypeSelect').value;
+      options.pattern = document.getElementById('patternSelect').value;
+      options.multiple = document.getElementById('multipleCheckbox').checked;
+      options.removeNonZh = document.getElementById('removeNonZhCheckbox').checked;
+      options.nonZh = document.getElementById('nonZhSelect').value;
+      options.v = document.getElementById('vCheckbox').checked;
+      
+      // segmentit: convert selected value to number if provided
+      const segmentitVal = document.getElementById('segmentitSelect').value;
+      if (segmentitVal) {
+        options.segmentit = parseInt(segmentitVal, 10);
+      }
+      
+      // Surname options
+      options.surname = document.getElementById('surnameSelect').value;
+      
+      // Deprecated mode
+      options.mode = document.getElementById('modeSelect').value;
+      
+      // Tone sandhi option
+      options.toneSandhi = document.getElementById('toneSandhiCheckbox').checked;
+      
+      // nonZhScope: convert the text input into a RegExp if provided
+      const nonZhScopeInput = document.getElementById('nonZhScopeInput').value;
+      if (nonZhScopeInput) {
+        try {
+          options.nonZhScope = new RegExp(nonZhScopeInput);
+        } catch (e) {
+          alert('Invalid RegExp for nonZhScope');
+          return;
         }
-    </script>
+      }
+      
+      // Separator option
+      const separatorInput = document.getElementById('separatorInput').value;
+      if (separatorInput) {
+        options.separator = separatorInput;
+      }
+      
+      // Perform the conversion using pinyin-pro API
+      try {
+        const result = pinyinPro.pinyin(inputText, options);
+        document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        document.getElementById('output').textContent = 'Error: ' + error;
+      }
+    }
+  </script>
 </body>
 </html>
