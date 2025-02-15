@@ -10,7 +10,7 @@
       --pinyin-size: 14px;
       --pinyin-color: #666;
       --hanzi-color: #000;
-      --hanzi-font: SimSun;
+      --hanzi-font: KaiTi;
     }
     * {
       box-sizing: border-box;
@@ -143,6 +143,10 @@
         transform: none;
         justify-content: center;
       }
+      /* Hide Hanzi Size, Pinyin Size, and Font controls on mobile */
+      .hide-on-mobile {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -158,11 +162,11 @@
   <div class="button-container">
     <button id="toggleInput">Collapse</button>
     <button id="togglePinyin">Hide Pinyin</button>
-    <label>Hanzi Size:
+    <label class="hide-on-mobile">Hanzi Size:
       <input type="range" id="hanziSize" min="12" max="100" value="24">
       <span id="hanziSizeValue">24px</span>
     </label>
-    <label>Pinyin Size:
+    <label class="hide-on-mobile">Pinyin Size:
       <input type="range" id="pinyinSize" min="10" max="100" value="14">
       <span id="pinyinSizeValue">14px</span>
     </label>
@@ -172,10 +176,10 @@
     <label>Hanzi Color:
       <input type="color" id="hanziColor" value="#000000">
     </label>
-    <label>Font:
+    <label class="hide-on-mobile">Font:
       <select id="fontSelector">
+        <option value="KaiTi" selected>KaiTi</option>
         <option value="SimSun">SimSun</option>
-        <option value="KaiTi">KaiTi</option>
       </select>
     </label>
   </div>
@@ -280,16 +284,12 @@
             const wrapper = document.createElement('span');
             wrapper.className = 'hanzi-pinyin';
             if (isHanzi(char) && pinyinIndex < pinyinData.length) {
-              wrapper.innerHTML = `
-                <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
-                <span class="hanzi">${char}</span>
-              `;
+              wrapper.innerHTML = `<span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
+                                     <span class="hanzi">${char}</span>`;
               pinyinIndex++;
             } else {
-              wrapper.innerHTML = `
-                <span class="pinyin"></span>
-                <span class="hanzi">${char}</span>
-              `;
+              wrapper.innerHTML = `<span class="pinyin"></span>
+                                     <span class="hanzi">${char}</span>`;
               if (pinyinIndex < pinyinData.length) pinyinIndex++;
             }
             fragment.appendChild(wrapper);
