@@ -1,324 +1,326 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chinese Pinyin Converter</title>
-  <style>
-    :root {
-      --hanzi-size: 24px;
-      --pinyin-size: 14px;
-      --pinyin-color: #666;
-      --hanzi-color: #000;
-      --hanzi-font: SimSun;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .container {
-      flex: 1;
-      display: flex;
-      gap: 20px;
-      padding: 20px;
-    }
-    .input-section,
-    .output-section {
-      flex: 1;
-      padding: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      overflow: auto;
-    }
-    .output-section {
-      white-space: pre-wrap;
-    }
-    .input-section.fullscreen-hidden {
-      display: none;
-    }
-    .output-section.fullscreen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 1000;
-      padding: 60px;
-    }
-    textarea {
-      width: 100%;
-      height: 70%;
-      padding: 10px;
-      margin-bottom: 10px;
-      resize: vertical;
-    }
-    .hanzi-pinyin {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 2px;
-      line-height: 1.2;
-    }
-    .pinyin {
-      font-size: var(--pinyin-size);
-      color: var(--pinyin-color);
-    }
-    .hanzi {
-      font-size: var(--hanzi-size);
-      color: var(--hanzi-color);
-      font-family: var(--hanzi-font);
-    }
-    /* Modernized Button Container */
-    .button-container {
-      position: fixed;
-      bottom: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-      z-index: 1001;
-      background: linear-gradient(145deg, #ffffff, #f0f0f0);
-      padding: 15px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .button-container button,
-    .button-container label {
-      background-color: #fff;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      margin: 0;
-      width: 80px;
-      transition: background-color 0.3s, box-shadow 0.3s;
-    }
-    .button-container button:hover,
-    .button-container label:hover {
-      background-color: #f7f7f7;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    }
-    /* Labels display their text in a column, with the input below */
-    .button-container label {
-      cursor: default;
-      display: flex;
-      flex-direction: column;
-      font-size: 14px;
-    }
-    .button-container input,
-    .button-container select {
-      margin-top: 5px;
-    }
-    /* Hide pinyin if the output section has the hide class */
-    .output-section.hide-pinyin .pinyin {
-      display: none;
-    }
-    @media (max-width: 768px) {
-      .container {
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese Pinyin Converter</title>
+    <style>
+      :root {
+        --hanzi-size: 24px;
+        --pinyin-size: 14px;
+        --pinyin-color: #666;
+        --hanzi-color: #000;
+        --hanzi-font: SimSun;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
         flex-direction: column;
-        height: auto;
+      }
+      .container {
+        flex: 1;
+        display: flex;
+        gap: 20px;
+        padding: 20px;
       }
       .input-section,
       .output-section {
-        width: 100%;
-        height: auto;
+        flex: 1;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      .output-section {
+        white-space: pre-wrap;
+      }
+      .input-section.fullscreen-hidden {
+        display: none;
       }
       .output-section.fullscreen {
-        padding: 25px; /* Adjust this value as needed for mobile */
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        padding: 60px;
       }
+      textarea {
+        width: 100%;
+        height: 70%;
+        padding: 10px;
+        margin-bottom: 10px;
+        resize: vertical;
+      }
+      .hanzi-pinyin {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 2px;
+        line-height: 1.2;
+      }
+      .pinyin {
+        font-size: var(--pinyin-size);
+        color: var(--pinyin-color);
+      }
+      .hanzi {
+        font-size: var(--hanzi-size);
+        color: var(--hanzi-color);
+        font-family: var(--hanzi-font);
+      }
+      /* Modernized Button Container */
       .button-container {
+        position: fixed;
         bottom: 10px;
-        left: 25px;
-        right: 25px;
-        transform: none;
-        justify-content: center;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+        z-index: 1001;
+        background: linear-gradient(145deg, #ffffff, #f0f0f0);
+        padding: 15px 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="input-section">
-      <textarea placeholder="Enter Chinese text here..."></textarea>
+      .button-container button,
+      .button-container label {
+        background-color: #fff;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 0;
+        width: 80px;
+        transition: background-color 0.3s, box-shadow 0.3s;
+      }
+      .button-container button:hover,
+      .button-container label:hover {
+        background-color: #f7f7f7;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      /* Labels display their text in a column, with the input below */
+      .button-container label {
+        cursor: default;
+        display: flex;
+        flex-direction: column;
+        font-size: 14px;
+      }
+      .button-container input,
+      .button-container select {
+        margin-top: 5px;
+      }
+      /* Hide pinyin if the output section has the hide class */
+      .output-section.hide-pinyin .pinyin {
+        display: none;
+      }
+      @media (max-width: 768px) {
+        .container {
+          flex-direction: column;
+          height: auto;
+        }
+        .input-section,
+        .output-section {
+          width: 100%;
+          height: auto;
+        }
+        .output-section.fullscreen {
+          padding: 25px; /* Adjust this value as needed for mobile */
+        }
+        .button-container {
+          bottom: 10px;
+          left: 25px;
+          right: 25px;
+          transform: none;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="input-section">
+        <textarea placeholder="Enter Chinese text here..."></textarea>
+      </div>
+      <div class="output-section"></div>
     </div>
-    <div class="output-section"></div>
-  </div>
 
-  <!-- All buttons and controls in one horizontal flex container, fixed at the bottom -->
-  <div class="button-container">
-    <button id="toggleInput">Collapse</button>
-    <button id="togglePinyin">Hide Pinyin</button>
-    <label>Hanzi Size:
-      <input type="range" id="hanziSize" min="12" max="100" value="24">
-      <span id="hanziSizeValue">24px</span>
-    </label>
-    <label>Pinyin Size:
-      <input type="range" id="pinyinSize" min="10" max="100" value="14">
-      <span id="pinyinSizeValue">14px</span>
-    </label>
-    <label>Pinyin Color:
-      <input type="color" id="pinyinColor" value="#666666">
-    </label>
-    <label>Hanzi Color:
-      <input type="color" id="hanziColor" value="#000000">
-    </label>
-    <label>Font:
-      <select id="fontSelector">
-        <option value="SimSun">SimSun</option>
-        <option value="KaiTi">KaiTi</option>
-      </select>
-    </label>
-  </div>
+    <!-- All buttons and controls in one horizontal flex container, fixed at the bottom -->
+    <div class="button-container">
+      <button id="toggleInput">Collapse</button>
+      <button id="togglePinyin">Hide Pinyin</button>
+      <label>Hanzi Size:
+        <input type="range" id="hanziSize" min="12" max="100" value="24">
+        <span id="hanziSizeValue">24px</span>
+      </label>
+      <label>Pinyin Size:
+        <input type="range" id="pinyinSize" min="10" max="100" value="14">
+        <span id="pinyinSizeValue">14px</span>
+      </label>
+      <label>Pinyin Color:
+        <input type="color" id="pinyinColor" value="#666666">
+      </label>
+      <label>Hanzi Color:
+        <input type="color" id="hanziColor" value="#000000">
+      </label>
+      <label>Font:
+        <select id="fontSelector">
+          <option value="SimSun">SimSun</option>
+          <option value="KaiTi">KaiTi</option>
+        </select>
+      </label>
+    </div>
 
-  <script src="https://unpkg.com/pinyin-pro"></script>
-  <script>
-    const inputSection = document.querySelector('.input-section');
-    const outputSection = document.querySelector('.output-section');
-    const textarea = document.querySelector('textarea');
-    const toggleInput = document.querySelector('#toggleInput');
-    const togglePinyin = document.querySelector('#togglePinyin');
-    const hanziSize = document.querySelector('#hanziSize');
-    const pinyinSize = document.querySelector('#pinyinSize');
-    const pinyinColor = document.querySelector('#pinyinColor');
-    const hanziColor = document.querySelector('#hanziColor');
-    const fontSelector = document.querySelector('#fontSelector');
+    <script src="https://unpkg.com/pinyin-pro"></script>
+    <script>
+      const inputSection = document.querySelector('.input-section');
+      const outputSection = document.querySelector('.output-section');
+      const textarea = document.querySelector('textarea');
+      const toggleInput = document.querySelector('#toggleInput');
+      const togglePinyin = document.querySelector('#togglePinyin');
+      const hanziSize = document.querySelector('#hanziSize');
+      const pinyinSize = document.querySelector('#pinyinSize');
+      const pinyinColor = document.querySelector('#pinyinColor');
+      const hanziColor = document.querySelector('#hanziColor');
+      const fontSelector = document.querySelector('#fontSelector');
 
-    textarea.addEventListener('input', debounce(processText, 300));
-    toggleInput.addEventListener('click', () => {
-      inputSection.classList.toggle('fullscreen-hidden');
-      outputSection.classList.toggle('fullscreen');
-      toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
-        ? 'Expand'
-        : 'Collapse';
-    });
+      textarea.addEventListener('input', debounce(processText, 300));
+      toggleInput.addEventListener('click', () => {
+        inputSection.classList.toggle('fullscreen-hidden');
+        outputSection.classList.toggle('fullscreen');
+        toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
+          ? 'Expand'
+          : 'Collapse';
+      });
 
-    // Toggle pinyin display
-    togglePinyin.addEventListener('click', () => {
-      outputSection.classList.toggle('hide-pinyin');
-      togglePinyin.textContent = outputSection.classList.contains('hide-pinyin') ? 'Show Pinyin' : 'Hide Pinyin';
-    });
+      // Toggle pinyin display
+      togglePinyin.addEventListener('click', () => {
+        outputSection.classList.toggle('hide-pinyin');
+        togglePinyin.textContent = outputSection.classList.contains('hide-pinyin')
+          ? 'Show Pinyin'
+          : 'Hide Pinyin';
+      });
 
-    hanziSize.addEventListener('input', updateFontSizes);
-    pinyinSize.addEventListener('input', updateFontSizes);
-    pinyinColor.addEventListener('input', (e) => {
-      document.documentElement.style.setProperty('--pinyin-color', e.target.value);
-    });
-    hanziColor.addEventListener('input', (e) => {
-      document.documentElement.style.setProperty('--hanzi-color', e.target.value);
-    });
-    fontSelector.addEventListener('change', (e) => {
-      document.documentElement.style.setProperty('--hanzi-font', e.target.value);
-    });
+      hanziSize.addEventListener('input', updateFontSizes);
+      pinyinSize.addEventListener('input', updateFontSizes);
+      pinyinColor.addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--pinyin-color', e.target.value);
+      });
+      hanziColor.addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--hanzi-color', e.target.value);
+      });
+      fontSelector.addEventListener('change', (e) => {
+        document.documentElement.style.setProperty('--hanzi-font', e.target.value);
+      });
 
-    async function processText() {
-      const rawText = textarea.value;
-      try {
-        const pinyinData = await getPinyinData(rawText);
-        const tempDiv = document.createElement('div');
-        tempDiv.textContent = rawText;
-        processTextNodes(tempDiv, pinyinData);
-        outputSection.innerHTML = '';
-        outputSection.appendChild(tempDiv);
-      } catch (error) {
-        console.error('Error processing text:', error);
+      async function processText() {
+        const rawText = textarea.value;
+        try {
+          const pinyinData = await getPinyinData(rawText);
+          const tempDiv = document.createElement('div');
+          tempDiv.textContent = rawText;
+          processTextNodes(tempDiv, pinyinData);
+          outputSection.innerHTML = '';
+          outputSection.appendChild(tempDiv);
+        } catch (error) {
+          console.error('Error processing text:', error);
+        }
       }
-    }
 
-    async function getPinyinData(text) {
-      const options = {
-        type: 'array',
-        toneType: 'symbol',
-        pattern: 'pinyin',
-        multiple: true,
-        removeNonZh: false,
-        nonZh: 'spaced',
-        v: false,
-        mode: 'normal'
-      };
-      try {
-        const result = pinyinPro.pinyin(text, options);
-        return result.map((pinyin, index) => ({
-          hanzi: text[index],
-          pinyin: pinyin
-        }));
-      } catch (error) {
-        console.error('Error fetching Pinyin data:', error);
-        return [];
+      async function getPinyinData(text) {
+        const options = {
+          type: 'array',
+          toneType: 'symbol',
+          pattern: 'pinyin',
+          multiple: true,
+          removeNonZh: false,
+          nonZh: 'spaced',
+          v: false,
+          mode: 'normal'
+        };
+        try {
+          const result = pinyinPro.pinyin(text, options);
+          return result.map((pinyin, index) => ({
+            hanzi: text[index],
+            pinyin: pinyin
+          }));
+        } catch (error) {
+          console.error('Error fetching Pinyin data:', error);
+          return [];
+        }
       }
-    }
 
-    // Process text nodes to add pinyin above hanzi
-    function processTextNodes(node, pinyinData) {
-      const walker = document.createTreeWalker(
-        node,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-      );
-      let pinyinIndex = 0;
-      let textNode;
-      while ((textNode = walker.nextNode())) {
-        const chars = textNode.nodeValue.split('');
-        const parent = textNode.parentNode;
-        const fragment = document.createDocumentFragment();
-        chars.forEach(char => {
-          if (char === '\n') {
-            const br = document.createElement('br');
-            fragment.appendChild(br);
-            if (pinyinIndex < pinyinData.length) pinyinIndex++;
-          } else {
-            const wrapper = document.createElement('span');
-            wrapper.className = 'hanzi-pinyin';
-            if (isHanzi(char) && pinyinIndex < pinyinData.length) {
-              wrapper.innerHTML = 
-                <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
-                <span class="hanzi">${char}</span>
-              ;
-              pinyinIndex++;
-            } else {
-              wrapper.innerHTML = 
-                <span class="pinyin"></span>
-                <span class="hanzi">${char}</span>
-              ;
+      // Process text nodes to add pinyin above hanzi
+      function processTextNodes(node, pinyinData) {
+        const walker = document.createTreeWalker(
+          node,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        let pinyinIndex = 0;
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+          const chars = textNode.nodeValue.split('');
+          const parent = textNode.parentNode;
+          const fragment = document.createDocumentFragment();
+          chars.forEach((char) => {
+            if (char === '\n') {
+              const br = document.createElement('br');
+              fragment.appendChild(br);
               if (pinyinIndex < pinyinData.length) pinyinIndex++;
+            } else {
+              const wrapper = document.createElement('span');
+              wrapper.className = 'hanzi-pinyin';
+              if (isHanzi(char) && pinyinIndex < pinyinData.length) {
+                wrapper.innerHTML = `
+                  <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
+                  <span class="hanzi">${char}</span>
+                `;
+                pinyinIndex++;
+              } else {
+                wrapper.innerHTML = `
+                  <span class="pinyin"></span>
+                  <span class="hanzi">${char}</span>
+                `;
+                if (pinyinIndex < pinyinData.length) pinyinIndex++;
+              }
+              fragment.appendChild(wrapper);
             }
-            fragment.appendChild(wrapper);
-          }
-        });
-        parent.replaceChild(fragment, textNode);
+          });
+          parent.replaceChild(fragment, textNode);
+        }
       }
-    }
 
-    function isHanzi(char) {
-      return /[\u4e00-\u9fa5]/.test(char);
-    }
+      function isHanzi(char) {
+        return /[\u4e00-\u9fa5]/.test(char);
+      }
 
-    function updateFontSizes() {
-      document.documentElement.style.setProperty('--hanzi-size', ${hanziSize.value}px);
-      document.documentElement.style.setProperty('--pinyin-size', ${pinyinSize.value}px);
-      document.querySelector('#hanziSizeValue').textContent = ${hanziSize.value}px;
-      document.querySelector('#pinyinSizeValue').textContent = ${pinyinSize.value}px;
-    }
+      function updateFontSizes() {
+        document.documentElement.style.setProperty('--hanzi-size', `${hanziSize.value}px`);
+        document.documentElement.style.setProperty('--pinyin-size', `${pinyinSize.value}px`);
+        document.querySelector('#hanziSizeValue').textContent = `${hanziSize.value}px`;
+        document.querySelector('#pinyinSizeValue').textContent = `${pinyinSize.value}px`;
+      }
 
-    function debounce(fn, delay) {
-      let timeout;
-      return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => fn.apply(this, args), delay);
-      };
-    }
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
 
-    updateFontSizes();
-  </script>
-</body>
+      updateFontSizes();
+    </script>
+  </body>
 </html>
