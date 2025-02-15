@@ -5,44 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chinese Pinyin Converter</title>
     <style>
+      /* Set the base font size (16px) to enable rem unit conversions consistently */
+      html {
+        font-size: 16px;
+      }
+      
       :root {
-        --hanzi-size: 24px;
-        --pinyin-size: 14px;
+        /* Define CSS variables for scalable typography using rem units */
+        --hanzi-size: 1.5rem;  /* Hanzi font size: 24px converted to rem (24/16 = 1.5rem) */
+        --pinyin-size: 0.875rem; /* Pinyin font size: 14px converted to rem (14/16 = 0.875rem) */
         --pinyin-color: #666;
         --hanzi-color: #000;
         --hanzi-font: KaiTi;
       }
+      /* Apply universal box-sizing and remove default margin and padding */
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
+      /* Style the body to use a sans-serif font and set up a vertical flex layout */
       body {
         font-family: Arial, sans-serif;
         height: 100vh;
         display: flex;
         flex-direction: column;
       }
+      /* Container holds the input and output sections side by side with spacing */
       .container {
         flex: 1;
         display: flex;
-        gap: 20px;
-        padding: 20px;
+        /* Gap between sections: 20px converted to rem (20/16 = 1.25rem) */
+        gap: 1.25rem;
+        /* Padding around container: 20px converted to rem (20/16 = 1.25rem) */
+        padding: 1.25rem;
       }
+      /* Style for both the input and output sections */
       .input-section,
       .output-section {
         flex: 1;
-        padding: 20px;
+        /* Internal padding: 20px converted to rem (20/16 = 1.25rem) */
+        padding: 1.25rem;
         border: 1px solid #ccc;
-        border-radius: 8px;
+        /* Rounded corners: 8px converted to rem (8/16 = 0.5rem) */
+        border-radius: 0.5rem;
         overflow: auto;
       }
+      /* Ensure white space wraps appropriately in the output section */
       .output-section {
         white-space: pre-wrap;
       }
+      /* Hide the input section when the fullscreen mode is activated */
       .input-section.fullscreen-hidden {
         display: none;
       }
+      /* Fullscreen mode for output section with fixed positioning and adjusted padding */
       .output-section.fullscreen {
         position: fixed;
         top: 0;
@@ -50,96 +67,136 @@
         right: 0;
         bottom: 0;
         z-index: 1000;
-        padding: 60px;
+        /* Increased padding for fullscreen: 60px converted to rem (60/16 = 3.75rem) */
+        padding: 3.75rem;
+        border: none;
+        border-radius: 0;
       }
+      /* Style the textarea for text input */
       textarea {
         width: 100%;
-        height: 70%;
-        padding: 10px;
-        margin-bottom: 10px;
+        height: 96%;
+        /* Padding inside the textarea: 10px converted to rem (10/16 ≈ 0.625rem) */
+        padding: 0.625rem;
+        border: none;
+        /* Margin below the textarea: 10px converted to rem (10/16 ≈ 0.625rem) */
+        margin-bottom: 0.625rem;
         resize: vertical;
       }
+      /* Remove the default focus outline on the textarea */
+      textarea:focus {
+        outline: none;
+      }
+      /* Each hanzi and its corresponding pinyin are arranged in a vertical column */
       .hanzi-pinyin {
         display: inline-flex;
         flex-direction: column;
         align-items: center;
-        margin: 2px;
+        /* Small margin between annotated characters: 2px converted to rem (2/16 = 0.125rem) */
+        margin: 0.125rem;
         line-height: 1.2;
       }
+      /* Style for the pinyin text displayed above the hanzi */
       .pinyin {
         font-size: var(--pinyin-size);
         color: var(--pinyin-color);
       }
+      /* Style for the hanzi characters */
       .hanzi {
         font-size: var(--hanzi-size);
         color: var(--hanzi-color);
         font-family: var(--hanzi-font);
       }
-      /* Modernized Button Container */
+      /* Modern styling for the button container fixed at the bottom */
       .button-container {
         position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
+        /* Position from the bottom: 10px converted to rem (10/16 ≈ 0.625rem) */
+        bottom: 0.625rem;
+        left: 0;
+        width: 100%;
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 20px;
-        flex-wrap: wrap;
+        justify-content: center;
+        /* Gap between buttons: 20px converted to rem (20/16 = 1.25rem) */
+        gap: 1.25rem;
+        flex-wrap: nowrap;
         z-index: 1001;
-        background: linear-gradient(145deg, #ffffff, #f0f0f0);
-        padding: 15px 20px;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background: transparent;
+        overflow-x: auto;
+        /* Padding for the container: 15px top/bottom (≈0.9375rem) and 20px left/right (1.25rem) */
+        padding: 0.9375rem 1.25rem;
+        box-shadow: none;
       }
+      /* Style for buttons and labels inside the button container */
       .button-container button,
       .button-container label {
-        background-color: #fff;
+        align-items: center;    /* Center content vertically */
+        justify-content: center;/* Center content horizontally */
+        background-color: #007aff;
+        color: #ffffff;
         border: none;
-        padding: 8px 14px;
-        border-radius: 6px;
+        /* Padding for buttons: 8px converted to rem (8/16 = 0.5rem) */
+        padding: 0.5rem 0.5rem;
+        /* Rounded corners: 6px converted to rem (6/16 = 0.375rem) */
+        border-radius: 0.375rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         margin: 0;
-        width: 80px;
+        /* Set button height: 51px converted to rem (51/16 ≈ 3.1875rem) */
+        height: 3.1875rem;
+        width: auto;
+        /* Set font size: 13px converted to rem (13/16 ≈ 0.8125rem) */
+        font-size: 0.8125rem;
         transition: background-color 0.3s, box-shadow 0.3s;
       }
+      /* Hover effects for buttons and labels */
       .button-container button:hover,
       .button-container label:hover {
-        background-color: #f7f7f7;
+        background-color: #005bb5;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       }
-      /* Labels display their text in a column, with the input below */
+      /* Labels display their text in a vertical layout with the input control below */
       .button-container label {
         cursor: default;
         display: flex;
         flex-direction: column;
-        font-size: 14px;
       }
+      /* Add a small top margin to inputs and selects within the button container */
       .button-container input,
       .button-container select {
-        margin-top: 5px;
+        /* Margin-top: 5px converted to rem (5/16 ≈ 0.3125rem) */
+        margin-top: 0.3125rem;
       }
-      /* Hide pinyin if the output section has the hide class */
+      /* Hide the pinyin annotations when the output section has the 'hide-pinyin' class */
       .output-section.hide-pinyin .pinyin {
         display: none;
       }
       @media (max-width: 768px) {
+        /* On smaller screens, hide the first two labels in the button container */
+        .button-container label:nth-of-type(1),
+        .button-container label:nth-of-type(2) {
+          display: none;
+        }
+        /* Stack the container sections vertically on mobile */
         .container {
           flex-direction: column;
           height: auto;
         }
+        /* Make the input and output sections full width and adjust height */
         .input-section,
         .output-section {
           width: 100%;
           height: auto;
         }
+        /* Adjust padding for fullscreen output on smaller screens: 25px converted to rem (25/16 ≈ 1.5625rem) */
         .output-section.fullscreen {
-          padding: 25px; /* Adjust this value as needed for mobile */
+          padding: 1.5625rem;
         }
         .button-container {
-          bottom: 10px;
-          left: 25px;
-          right: 25px;
+          /* Adjust positioning for mobile: bottom remains 10px (≈0.625rem), sides become 25px (≈1.5625rem) */
+          bottom: 0.625rem;
+          left: 1.5625rem;
+          right: 1.5625rem;
           transform: none;
           justify-content: center;
         }
@@ -148,44 +205,37 @@
   </head>
   <body>
     <div class="container">
+      <!-- Input section where the user enters Chinese text -->
       <div class="input-section">
         <textarea placeholder="Enter Chinese text here..."></textarea>
       </div>
+      <!-- Output section where the converted text with pinyin is displayed -->
       <div class="output-section"></div>
     </div>
 
-    <!-- All buttons and controls in one horizontal flex container, fixed at the bottom -->
+    <!-- Button container: holds all interactive buttons and controls fixed at the bottom -->
     <div class="button-container">
-      <button id="toggleInput">Collapse</button>
-      <button id="togglePinyin">Hide Pinyin</button>
+      <button id="toggleInput" type="button">Hide Editor</button>
+      <button id="togglePinyin" type="button">Hide Pinyin</button>
 
-      <label>Hanzi Size:
+      <label>Hanzi Size
         <input type="number" id="hanziSize" min="12" max="100" value="24">
       </label>
 
-      <label>Pinyin Size:
-        <input type="range" id="pinyinSize" min="10" max="100" value="14">
-        <span id="pinyinSizeValue">14px</span>
+      <label>Pinyin Size
+        <input type="number" id="pinyinSize" min="10" max="100" value="14">
       </label>
-      <label>Pinyin Color:
+      <label>Pinyin Color
         <input type="color" id="pinyinColor" value="#666666">
       </label>
-      <label>Hanzi Color:
+      <label>Hanzi Color
         <input type="color" id="hanziColor" value="#000000">
       </label>
-      <!-- Font selection dropdown -->
-      <!--
-      <label>Font:
-        <select id="fontSelector">
-          <option value="KaiTi">KaiTi</option>
-          <option value="SimSun">SimSun</option>
-        </select>
-      </label>
-      -->
     </div>
 
     <script src="https://unpkg.com/pinyin-pro"></script>
     <script>
+      // Select necessary DOM elements for interactive functionality
       const inputSection = document.querySelector('.input-section');
       const outputSection = document.querySelector('.output-section');
       const textarea = document.querySelector('textarea');
@@ -195,18 +245,20 @@
       const pinyinSize = document.querySelector('#pinyinSize');
       const pinyinColor = document.querySelector('#pinyinColor');
       const hanziColor = document.querySelector('#hanziColor');
-      const fontSelector = document.querySelector('#fontSelector');
 
+      // Attach an input event listener with debounce to process text after the user stops typing
       textarea.addEventListener('input', debounce(processText, 300));
+
+      // Toggle between showing/hiding the editor and activating fullscreen output display
       toggleInput.addEventListener('click', () => {
         inputSection.classList.toggle('fullscreen-hidden');
         outputSection.classList.toggle('fullscreen');
         toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
-          ? 'Expand'
-          : 'Collapse';
+          ? 'Show Editor'
+          : 'Hide Editor';
       });
 
-      // Toggle pinyin display
+      // Toggle the visibility of the pinyin annotations in the output section
       togglePinyin.addEventListener('click', () => {
         outputSection.classList.toggle('hide-pinyin');
         togglePinyin.textContent = outputSection.classList.contains('hide-pinyin')
@@ -214,24 +266,29 @@
           : 'Hide Pinyin';
       });
 
+      // Update CSS font size variables when the hanzi or pinyin size input values change (px to rem conversion)
       hanziSize.addEventListener('input', updateFontSizes);
       pinyinSize.addEventListener('input', updateFontSizes);
+
+      // Update the pinyin color CSS variable based on the user's color input
       pinyinColor.addEventListener('input', (e) => {
         document.documentElement.style.setProperty('--pinyin-color', e.target.value);
       });
+
+      // Update the hanzi color CSS variable based on the user's color input
       hanziColor.addEventListener('input', (e) => {
         document.documentElement.style.setProperty('--hanzi-color', e.target.value);
       });
-      fontSelector.addEventListener('change', (e) => {
-        document.documentElement.style.setProperty('--hanzi-font', e.target.value);
-      });
 
+      // Process the text input and insert corresponding pinyin annotations using the pinyinPro library
       async function processText() {
         const rawText = textarea.value;
         try {
           const pinyinData = await getPinyinData(rawText);
+          // Create a temporary div to hold the processed text
           const tempDiv = document.createElement('div');
           tempDiv.textContent = rawText;
+          // Wrap hanzi characters with their corresponding pinyin annotations
           processTextNodes(tempDiv, pinyinData);
           outputSection.innerHTML = '';
           outputSection.appendChild(tempDiv);
@@ -240,6 +297,7 @@
         }
       }
 
+      // Retrieve pinyin conversion data for the given text using the pinyinPro library
       async function getPinyinData(text) {
         const options = {
           type: 'array',
@@ -263,7 +321,7 @@
         }
       }
 
-      // Process text nodes to add pinyin above hanzi
+      // Traverse text nodes in the provided element and wrap Chinese characters (hanzi) with corresponding pinyin annotations
       function processTextNodes(node, pinyinData) {
         const walker = document.createTreeWalker(
           node,
@@ -279,19 +337,23 @@
           const fragment = document.createDocumentFragment();
           chars.forEach((char) => {
             if (char === '\n') {
+              // Insert a line break for newline characters
               const br = document.createElement('br');
               fragment.appendChild(br);
               if (pinyinIndex < pinyinData.length) pinyinIndex++;
             } else {
+              // Create a span wrapper for each character and its potential pinyin annotation
               const wrapper = document.createElement('span');
               wrapper.className = 'hanzi-pinyin';
               if (isHanzi(char) && pinyinIndex < pinyinData.length) {
+                // If the character is a hanzi, wrap it with its corresponding pinyin
                 wrapper.innerHTML = `
                   <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
                   <span class="hanzi">${char}</span>
                 `;
                 pinyinIndex++;
               } else {
+                // For non-hanzi or missing pinyin data, wrap the character without annotation
                 wrapper.innerHTML = `
                   <span class="pinyin"></span>
                   <span class="hanzi">${char}</span>
@@ -305,17 +367,21 @@
         }
       }
 
+      // Determine whether a given character is a Chinese hanzi
       function isHanzi(char) {
         return /[\u4e00-\u9fa5]/.test(char);
       }
 
+      // Convert input pixel values to rem (using a 16px base) and update the corresponding CSS variables for font sizes
       function updateFontSizes() {
-        document.documentElement.style.setProperty('--hanzi-size', `${hanziSize.value}px`);
-        document.documentElement.style.setProperty('--pinyin-size', `${pinyinSize.value}px`);
-        document.querySelector('#hanziSizeValue').textContent = `${hanziSize.value}px`;
-        document.querySelector('#pinyinSizeValue').textContent = `${pinyinSize.value}px`;
+        const baseFontSize = 16; // Base font size in pixels for conversion
+        // Update hanzi font size: convert from px to rem and set the CSS variable
+        document.documentElement.style.setProperty('--hanzi-size', `${(hanziSize.value / baseFontSize).toFixed(3)}rem`);
+        // Update pinyin font size: convert from px to rem and set the CSS variable
+        document.documentElement.style.setProperty('--pinyin-size', `${(pinyinSize.value / baseFontSize).toFixed(3)}rem`);
       }
 
+      // Utility function to debounce execution of a function until after a specified delay
       function debounce(fn, delay) {
         let timeout;
         return (...args) => {
@@ -324,6 +390,7 @@
         };
       }
 
+      // Initialize the font sizes using default input values
       updateFontSizes();
     </script>
   </body>
