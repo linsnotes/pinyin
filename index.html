@@ -123,7 +123,6 @@
         flex-wrap: nowrap;
         z-index: 1001;
         background: transparent;
-        overflow-x: auto;
         /* Padding for the container: 15px top/bottom (≈0.9375rem) and 20px left/right (1.25rem) */
         padding: 0.9375rem 1.25rem;
         box-shadow: none;
@@ -177,6 +176,11 @@
         .button-container label:nth-of-type(2) {
           display: none;
         }
+
+        .button-container button,
+        .button-container label {
+          height: 3.1875rem;
+        }
         /* Stack the container sections vertically on mobile */
         .container {
           flex-direction: column;
@@ -194,9 +198,8 @@
         }
         .button-container {
           /* Adjust positioning for mobile: bottom remains 10px (≈0.625rem), sides become 25px (≈1.5625rem) */
-          bottom: 0.625rem;
-          left: 1.5625rem;
-          right: 1.5625rem;
+          bottom: 0.8rem;
+          left: 0rem;
           transform: none;
           justify-content: center;
         }
