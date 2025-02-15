@@ -10,7 +10,7 @@
         --pinyin-size: 14px;
         --pinyin-color: #666;
         --hanzi-color: #000;
-        --hanzi-font: SimSun;
+        --hanzi-font: KaiTi;
       }
       * {
         box-sizing: border-box;
@@ -158,10 +158,11 @@
     <div class="button-container">
       <button id="toggleInput">Collapse</button>
       <button id="togglePinyin">Hide Pinyin</button>
+
       <label>Hanzi Size:
-        <input type="range" id="hanziSize" min="12" max="100" value="24">
-        <span id="hanziSizeValue">24px</span>
+        <input type="number" id="hanziSize" min="12" max="100" value="24">
       </label>
+
       <label>Pinyin Size:
         <input type="range" id="pinyinSize" min="10" max="100" value="14">
         <span id="pinyinSizeValue">14px</span>
@@ -172,12 +173,15 @@
       <label>Hanzi Color:
         <input type="color" id="hanziColor" value="#000000">
       </label>
+      <!-- Font selection dropdown -->
+      <!--
       <label>Font:
         <select id="fontSelector">
-          <option value="SimSun">SimSun</option>
           <option value="KaiTi">KaiTi</option>
+          <option value="SimSun">SimSun</option>
         </select>
       </label>
+      -->
     </div>
 
     <script src="https://unpkg.com/pinyin-pro"></script>
