@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chinese Pinyin Converter</title>
+    <script data-goatcounter="https://linsnotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
     <style>
       html {
         font-size: 16px;
@@ -49,16 +50,29 @@
         padding: 1.25rem;
         border: 1px solid #ccc;
         border-radius: 0.5rem;
-        overflow: auto;
       }
       .output-section {
         white-space: pre-wrap;
       }
+      .input-section {
+        padding-bottom: 1.5rem; /* Add extra space at the bottom */
+      }
+      #visitor-counter {
+        font-size: 1em;
+        text-align: center;
+        color: #333;
+      }
+
+      #visitor-counter #pageviews {
+        font-weight: bold;
+        color: #000;
+      }
+
       .input-section.fullscreen-hidden {
         display: none;
       }
       .output-section.fullscreen {
-        position: fixed;
+        position: static;
         top: 0;
         left: 0;
         right: 0;
@@ -80,10 +94,9 @@
         outline: none;
       }
       textarea::placeholder {
-        color: #ba2e2e;
-        font-size: 1.5rem;
+        color: #164587;
+        font-size: 1.3rem;
         opacity: 1;
-        font-style: italic;
       }
       .hanzi-pinyin {
         display: inline-flex;
@@ -163,17 +176,27 @@
         -moz-appearance: none;
         appearance: none;
       }
+
+      #excelDropdown, #voiceSelect {
+          width: 10rem;
+      }
+
       .button-container select:focus {
         outline: none;
       }
       .output-section.hide-pinyin .pinyin {
         display: none;
       }
-      @media (max-width: 768px) {
+
+
+      @media (max-width:1200px) {
         .button-container label:nth-of-type(1),
         .button-container label:nth-of-type(2),
         .button-container label:nth-of-type(3),
         .button-container label:nth-of-type(4) {
+          display: none;
+        }
+        .print-btn {
           display: none;
         }
         .button-container button,
@@ -195,11 +218,9 @@
           height: auto;
         }
         textarea::placeholder {
-          color: #ba2e2e;
-          font-size: 0.7rem;
-          opacity: 1;
-          font-style: italic;
+          font-size: 0.9rem;
         }
+
         .output-section.fullscreen {
           padding: 1.5625rem;
         }
@@ -213,12 +234,28 @@
           gap: 0.5rem;
         }
       }
+      @media print {
+        .button-container {
+          display: none !important;
+        }
+      }
+
     </style>
   </head>
   <body>
     <div class="container">
       <div class="input-section">
-        <textarea placeholder="Move the cursor to the bottom of the page, or tap the bottom on a touch device, to reveal the control menu. You can enter Chinese text in 3 ways: (1) type it manually, (2) copy and paste it, or (3) upload an Excel file (.xlsx) where Column A contains titles and Column B contains text. Due to differences in browser support for voice synthesis across devices, the read-aloud function is only available on PCs and iPhones. For the best experience, using this web app on a PC is recommended."></textarea>
+        <textarea placeholder="Move the cursor to the bottom of the page, OR tap the bottom on a touch device, to reveal the control menu.
+        
+You can enter Chinese text in 3 ways:
+(1) manually type it into this box,
+(2) copy and paste it, or
+(3) upload an Excel file (.xlsx) where Column A contains titles and Column B contains text.
+        
+Due to differences in browser support for voice synthesis across devices, the read-aloud function is only available on PCs and iPhones. For the best experience, using this web app on a PC is recommended."></textarea>
+        <div id="visitor-counter">
+          Welcome! You’re visitor #<span id="pageviews">Loading...</span>
+        </div>
       </div>
       <div class="output-section"></div>
     </div>
@@ -254,6 +291,7 @@
       </select>
       <button id="readAloudBtn" type="button">Read Aloud</button>
       <button id="pauseResumeBtn" type="button" disabled>Pause</button>
+      <button class="print-btn" onclick="window.print()">Print This</button>
     </div>
 
     <script src="https://unpkg.com/pinyin-pro"></script>
@@ -578,7 +616,7 @@
       const buttonContainer = document.querySelector('.button-container');
       buttonContainer.classList.add('hidden');
 
-      const SHOW_ZONE = 150;
+      const SHOW_ZONE = 120;
       document.addEventListener('mousemove', (e) => {
         if (window.innerHeight - e.clientY < SHOW_ZONE) {
           buttonContainer.classList.remove('hidden');
@@ -616,6 +654,29 @@
           alert('The read aloud only works in PC (or iPhone).');
         }
       }
+      document.addEventListener('DOMContentLoaded', () => {
+            const pv = document.getElementById('pageviews');
+
+            if (pv !== null) {
+                  // Strip trailing slash (if any) so the path matches GoatCounter
+                  const uri = location.pathname.replace(/\/$/, '');
+                  // Build the JSON endpoint URL for your domain
+                  const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
+
+                  fetch(url)
+                        .then((response) => response.json())
+                        .then((data) => {
+                              // 'data.count' comes back as a string with possible whitespace
+                              const count = data.count.replace(/\s/g, '');
+                              // Format it with commas, etc.
+                              pv.innerText = new Intl.NumberFormat().format(count);
+                        })
+                        .catch((error) => {
+                              // Fallback if something goes wrong
+                              pv.innerText = '1';
+                        });
+            }
+      });
     </script>
   </body>
 </html>
