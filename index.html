@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese Pinyin Converter</title>
+    <style>
+      /* Set the base font size (16px) to enable rem unit conversions consistently */
+      html {
+        font-size: 16px;
+      }
+      
+      :root {
+        /* Define CSS variables for scalable typography using rem units */
+        --hanzi-size: 1.5rem;  /* Hanzi font size: 24px converted to rem (24/16 = 1.5rem) */
+        --pinyin-size: 0.875rem; /* Pinyin font size: 14px converted to rem (14/16 = 0.875rem) */
+        --pinyin-color: #666;
+        --hanzi-color: #000;
+        --hanzi-font: 
+          "STKaiti",
+          "Kaiti SC",
+          "Kaiti TC",        /* 锁定 iOS/macOS 华文楷体 */
+          "KaiTi",          /* 兼容 Windows 拼音写法 */
+          "楷体",           /* 中文系统 Fallback */
+          "华文楷体",       /* 补充 macOS 旧版名称 */
+          "Apple Kaiti",    /* 部分 iOS 版本英文环境名称 */
+          serif;            /* 最终回退 */
+      }
+      /* Apply universal box-sizing and remove default margin and padding */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      /* Style the body to use a sans-serif font and set up a vertical flex layout */
+      body {
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* Container holds the input and output sections side by side with spacing */
+      .container {
+        flex: 1;
+        display: flex;
+        /* Gap between sections: 20px converted to rem (20/16 = 1.25rem) */
+        gap: 1.25rem;
+        /* Padding around container: 20px converted to rem (20/16 = 1.25rem) */
+        padding: 1.25rem;
+      }
+      /* Style for both the input and output sections */
+      .input-section,
+      .output-section {
+        flex: 1;
+        /* Internal padding: 20px converted to rem (20/16 = 1.25rem) */
+        padding: 1.25rem;
+        border: 1px solid #ccc;
+        /* Rounded corners: 8px converted to rem (8/16 = 0.5rem) */
+        border-radius: 0.5rem;
+        overflow: auto;
+      }
+      /* Ensure white space wraps appropriately in the output section */
+      .output-section {
+        white-space: pre-wrap;
+      }
+      /* Hide the input section when the fullscreen mode is activated */
+      .input-section.fullscreen-hidden {
+        display: none;
+      }
+      /* Fullscreen mode for output section with fixed positioning and adjusted padding */
+      .output-section.fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        /* Increased padding for fullscreen: 60px converted to rem (60/16 = 3.75rem) */
+        padding: 3.75rem;
+        border: none;
+        border-radius: 0;
+      }
+      /* Style the textarea for text input */
+      textarea {
+        width: 100%;
+        height: 96%;
+        /* Padding inside the textarea: 10px converted to rem (10/16 ≈ 0.625rem) */
+        padding: 0.625rem;
+        border: none;
+        /* Margin below the textarea: 10px converted to rem (10/16 ≈ 0.625rem) */
+        margin-bottom: 0.625rem;
+        resize: vertical;
+      }
+      /* Remove the default focus outline on the textarea */
+      textarea:focus {
+        outline: none;
+      }
+      textarea::placeholder {
+        color: #ba2e2e;
+        font-size: 1.5rem;
+        opacity: 1;
+        font-style: italic;
+      }
+
+      /* Each hanzi and its corresponding pinyin are arranged in a vertical column */
+      .hanzi-pinyin {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        /* Small margin between annotated characters: 2px converted to rem (2/16 = 0.125rem) */
+        margin: 0.125rem;
+        line-height: 1.2;
+      }
+      /* Style for the pinyin text displayed above the hanzi */
+      .pinyin {
+        font-size: var(--pinyin-size);
+        color: var(--pinyin-color);
+      }
+      /* Style for the hanzi characters */
+      .hanzi {
+        font-size: var(--hanzi-size);
+        color: var(--hanzi-color);
+        font-family: var(--hanzi-font) !important; /* 确保不被其他样式覆盖 */
+      }
+      /* Modern styling for the button container fixed at the bottom */
+      .button-container {
+        position: fixed;
+        /* Position from the bottom: 10px converted to rem (10/16 ≈ 0.625rem) */
+        bottom: 0.05rem;
+        left: 0;
+        width: 100%;
+        display: flex; /* We'll hide it by adding .hidden class */
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        /* Gap between buttons: 20px converted to rem (20/16 = 1.25rem) */
+        gap: 1.25rem;
+        flex-wrap: nowrap;
+        z-index: 1001;
+        background: transparent;
+        /* Padding for the container: 15px top/bottom (≈0.9375rem) and 20px left/right (1.25rem) */
+        padding: 0.9375rem 1.25rem;
+        box-shadow: none;
+      }
+      /* Style for buttons and labels inside the button container */
+      .button-container button,
+      .button-container label {
+        align-items: center;    /* Center content vertically */
+        justify-content: center;/* Center content horizontally */
+        background-color: #007aff;
+        color: #ffffff;
+        border: none;
+        /* Padding for buttons: 8px converted to rem (8/16 = 0.5rem) */
+        padding: 0.5rem 0.5rem;
+        /* Rounded corners: 6px converted to rem (6/16 = 0.375rem) */
+        border-radius: 0.375rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 0;
+        /* Set button height: 51px converted to rem (51/16 ≈ 3.1875rem) */
+        height: 3.1875rem;
+        width: auto;
+        /* Set font size: 13px converted to rem (13/16 ≈ 0.8125rem) */
+        font-size: 0.8125rem;
+        transition: background-color 0.3s, box-shadow 0.3s;
+      }
+      /* Hover effects for buttons and labels */
+      .button-container button:hover,
+      .button-container label:hover {
+        background-color: #005bb5;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      /* Labels display their text in a vertical layout with the input control below */
+      .button-container label {
+        cursor: default;
+        display: flex;
+        flex-direction: column;
+      }
+      /* Add a small top margin to inputs and selects within the button container */
+      .button-container input,
+      .button-container select {
+        /* Margin-top: 5px converted to rem (5/16 ≈ 0.3125rem) */
+        margin-top: 0.3125rem;
+      }
+
+      /* Style for the dropdown to match the label and button style */
+      .button-container select {
+        background-color: #007aff;
+        color: #ffffff;
+        border: none;
+        padding: 0.5rem 0.5rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 0;
+        height: 3.1875rem;
+        width: auto;
+        font-size: 0.8125rem;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        -webkit-appearance: none; /* Remove default styling in Safari */
+        -moz-appearance: none; /* Remove default styling in Firefox */
+        appearance: none; /* Remove default styling */
+      }
+
+      /* Provide a consistent focus style for accessibility */
+      .button-container select:focus {
+        outline: none;
+      }
+
+      /* Hide the pinyin annotations when the output section has the 'hide-pinyin' class */
+      .output-section.hide-pinyin .pinyin {
+        display: none;
+      }
+  
+      @media (max-width: 768px) {
+        /* On smaller screens, hide the first few labels in the button container if desired */
+        .button-container label:nth-of-type(1),
+        .button-container label:nth-of-type(2),
+        .button-container label:nth-of-type(3),
+        .button-container label:nth-of-type(4) {
+          display: none;
+        }
+
+        .button-container button,
+        .button-container label,
+        .button-container select {
+          height: 2.5rem;
+          width: auto;
+        }
+        #voiceSelect {
+          width: 100px; /* fixed width, pick any value you like */
+        }
+        /* Stack the container sections vertically on mobile */
+        .container {
+          flex-direction: column;
+          height: auto;
+        }
+        /* Make the input and output sections full width and adjust height */
+        .input-section,
+        .output-section {
+          width: 100%;
+          height: auto;
+        }
+        /* Adjust padding for fullscreen output on smaller screens: 25px converted to rem (25/16 ≈ 1.5625rem) */
+        .output-section.fullscreen {
+          padding: 1.5625rem;
+        }
+        .button-container {
+          /* Adjust positioning for mobile */
+          bottom: 0.8rem;
+          flex-wrap: wrap;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;  /* center items in each row */
+          align-items: center; 
+          gap: 0.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Input section where the user enters Chinese text -->
+      <div class="input-section">
+        <textarea placeholder="You can enter Chinese text in 3 ways: (1) type it manually, (2) copy and paste it, or (3) upload an Excel file (.xlsx) where Column A contains titles and Column B contains text."></textarea>
+      </div>
+      <!-- Output section where the converted text with pinyin is displayed -->
+      <div class="output-section"></div>
+    </div>
+
+    <!-- Button container: holds all interactive buttons and controls fixed at the bottom -->
+    <div class="button-container">
+      <button id="toggleInput" type="button">Hide Editor</button>
+      <button id="togglePinyin" type="button">Hide Pinyin</button>
+
+      <label>Hanzi Size
+        <input type="number" id="hanziSize" min="12" max="100" value="24">
+      </label>
+
+      <label>Pinyin Size
+        <input type="number" id="pinyinSize" min="10" max="100" value="14">
+      </label>
+      <label>Pinyin Color
+        <input type="color" id="pinyinColor" value="#666666">
+      </label>
+      <label>Hanzi Color
+        <input type="color" id="hanziColor" value="#000000">
+      </label>
+      
+      <!-- Excel Upload functionality -->
+      <button id="uploadExcel" type="button">Upload</button>
+      <input type="file" id="excelFileInput" accept=".xlsx" style="display:none">
+      <select id="excelDropdown" class="hidden">
+        <option value="" disabled selected>Select</option>
+      </select>
+
+      <!-- NEW: Voice Dropdown and Read Aloud Button -->
+      <select id="voiceSelect">
+        <option value="" disabled selected>Select Voice</option>
+      </select>
+      <button id="readAloudBtn" type="button">Read Aloud</button>
+      
+      <!-- NEW: Pause/Resume Button -->
+      <button id="pauseResumeBtn" type="button" disabled>Pause</button>
+    </div>
+
+    <script src="https://unpkg.com/pinyin-pro"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      // -------------------------------
+      // Pinyin Processing Logic (Original)
+      // -------------------------------
+
+      // Select necessary DOM elements for interactive functionality
+      const inputSection = document.querySelector('.input-section');
+      const outputSection = document.querySelector('.output-section');
+      const textarea = document.querySelector('textarea');
+      const toggleInput = document.querySelector('#toggleInput');
+      const togglePinyin = document.querySelector('#togglePinyin');
+      const hanziSize = document.querySelector('#hanziSize');
+      const pinyinSize = document.querySelector('#pinyinSize');
+      const pinyinColor = document.querySelector('#pinyinColor');
+      const hanziColor = document.querySelector('#hanziColor');
+
+      // Attach an input event listener with debounce to process text after the user stops typing
+      textarea.addEventListener('input', debounce(processText, 300));
+
+      // Toggle between showing/hiding the editor and activating fullscreen output display
+      toggleInput.addEventListener('click', () => {
+        inputSection.classList.toggle('fullscreen-hidden');
+        outputSection.classList.toggle('fullscreen');
+        toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
+          ? 'Show Editor'
+          : 'Hide Editor';
+      });
+
+      // Toggle the visibility of the pinyin annotations in the output section
+      togglePinyin.addEventListener('click', () => {
+        outputSection.classList.toggle('hide-pinyin');
+        togglePinyin.textContent = outputSection.classList.contains('hide-pinyin')
+          ? 'Show Pinyin'
+          : 'Hide Pinyin';
+      });
+
+      // Update CSS font size variables when the hanzi or pinyin size input values change (px to rem conversion)
+      hanziSize.addEventListener('input', updateFontSizes);
+      pinyinSize.addEventListener('input', updateFontSizes);
+
+      // Update the pinyin color CSS variable based on the user's color input
+      pinyinColor.addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--pinyin-color', e.target.value);
+      });
+
+      // Update the hanzi color CSS variable based on the user's color input
+      hanziColor.addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--hanzi-color', e.target.value);
+      });
+
+      // Process the text input and insert corresponding pinyin annotations using the pinyinPro library
+      async function processText() {
+        const rawText = textarea.value;
+        try {
+          const pinyinData = await getPinyinData(rawText);
+          // Create a temporary div to hold the processed text
+          const tempDiv = document.createElement('div');
+          tempDiv.textContent = rawText;
+          // Wrap hanzi characters with their corresponding pinyin annotations
+          processTextNodes(tempDiv, pinyinData);
+          outputSection.innerHTML = '';
+          outputSection.appendChild(tempDiv);
+        } catch (error) {
+          console.error('Error processing text:', error);
+        }
+      }
+
+      // Retrieve pinyin conversion data for the given text using the pinyinPro library
+      async function getPinyinData(text) {
+        const options = {
+          type: 'array',
+          toneType: 'symbol',
+          pattern: 'pinyin',
+          multiple: true,
+          removeNonZh: false,
+          nonZh: 'spaced',
+          v: false,
+          mode: 'normal'
+        };
+        try {
+          const result = pinyinPro.pinyin(text, options);
+          return result.map((pinyin, index) => ({
+            hanzi: text[index],
+            pinyin: pinyin
+          }));
+        } catch (error) {
+          console.error('Error fetching Pinyin data:', error);
+          return [];
+        }
+      }
+
+      // Traverse text nodes in the provided element and wrap Chinese characters (hanzi) with corresponding pinyin annotations
+      function processTextNodes(node, pinyinData) {
+        const walker = document.createTreeWalker(
+          node,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        let pinyinIndex = 0;
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+          const chars = textNode.nodeValue.split('');
+          const parent = textNode.parentNode;
+          const fragment = document.createDocumentFragment();
+          chars.forEach((char) => {
+            if (char === '\n') {
+              // Insert a line break for newline characters
+              const br = document.createElement('br');
+              fragment.appendChild(br);
+              if (pinyinIndex < pinyinData.length) pinyinIndex++;
+            } else {
+              // Create a span wrapper for each character and its potential pinyin annotation
+              const wrapper = document.createElement('span');
+              wrapper.className = 'hanzi-pinyin';
+              if (isHanzi(char) && pinyinIndex < pinyinData.length) {
+                // If the character is a hanzi, wrap it with its corresponding pinyin
+                wrapper.innerHTML = `
+                  <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
+                  <span class="hanzi">${char}</span>
+                `;
+                pinyinIndex++;
+              } else {
+                // For non-hanzi or missing pinyin data, wrap the character without annotation
+                wrapper.innerHTML = `
+                  <span class="pinyin"></span>
+                  <span class="hanzi">${char}</span>
+                `;
+                if (pinyinIndex < pinyinData.length) pinyinIndex++;
+              }
+              fragment.appendChild(wrapper);
+            }
+          });
+          parent.replaceChild(fragment, textNode);
+        }
+      }
+
+      // Determine whether a given character is a Chinese hanzi
+      function isHanzi(char) {
+        return /[\u4e00-\u9fa5]/.test(char);
+      }
+
+      // Convert input pixel values to rem (using a 16px base) and update the corresponding CSS variables for font sizes
+      function updateFontSizes() {
+        const baseFontSize = 16; // Base font size in pixels for conversion
+        // Update hanzi font size: convert from px to rem and set the CSS variable
+        document.documentElement.style.setProperty('--hanzi-size', `${(hanziSize.value / baseFontSize).toFixed(3)}rem`);
+        // Update pinyin font size: convert from px to rem and set the CSS variable
+        document.documentElement.style.setProperty('--pinyin-size', `${(pinyinSize.value / baseFontSize).toFixed(3)}rem`);
+      }
+
+      // Utility function to debounce execution of a function until after a specified delay
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      // Initialize the font sizes using default input values
+      updateFontSizes();
+
+      // -------------------------------
+      // Excel Upload Functionality (Original)
+      // -------------------------------
+      const uploadExcelButton = document.querySelector('#uploadExcel');
+      const excelFileInput = document.querySelector('#excelFileInput');
+      const excelDropdown = document.querySelector('#excelDropdown');
+
+      // When the "Upload Excel" button is clicked, trigger file input click
+      uploadExcelButton.addEventListener('click', () => {
+        excelFileInput.click();
+      });
+
+      // When a file is selected, parse the Excel file
+      excelFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array'});
+          // Assume we use the first sheet in the workbook
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          // Convert sheet to JSON array (using header row index 0)
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          // Remove any rows that don't have at least 2 columns (title and text)
+          const filteredData = jsonData.filter(row => row.length >= 2);
+          // Populate the dropdown with titles from Column A and store corresponding text in a data attribute
+          excelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
+          filteredData.forEach((row, index) => {
+            const option = document.createElement('option');
+            option.textContent = row[0]; // Title from Column A
+            option.value = index; // Store index (if needed)
+            option.dataset.text = row[1]; // Text from Column B
+            excelDropdown.appendChild(option);
+          });
+          // Show the dropdown if data exists
+          if (filteredData.length > 0) {
+            excelDropdown.classList.remove('hidden');
+          } else {
+            excelDropdown.classList.add('hidden');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      // When the user selects an option from the dropdown, update the textarea and process the text
+      excelDropdown.addEventListener('change', () => {
+        const selectedOption = excelDropdown.options[excelDropdown.selectedIndex];
+        if (!selectedOption.dataset.text) {
+          return; 
+        }
+        textarea.value = selectedOption.dataset.text;
+        processText();
+      });
+
+      // -------------------------------
+      // NEW: Speech Synthesis (Read Aloud) Logic
+      // -------------------------------
+
+      const voiceSelect = document.getElementById('voiceSelect');
+      const readAloudBtn = document.getElementById('readAloudBtn');
+      let utterance = null;
+
+      // Detect device and browser
+      function detectDeviceAndBrowser() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        let device = 'other'; 
+        let browser = 'other';
+
+        // Device detection
+        if (/android/i.test(userAgent)) {
+          device = 'android';
+        } else if (/ipad|iphone|ipod/.test(userAgent) && !window.MSStream) {
+          device = 'ios';
+        } else if (/windows nt/i.test(userAgent)) {
+          device = 'windows';
+        } else if (/macintosh/i.test(userAgent) && !/iphone|ipad/.test(userAgent)) {
+          device = 'mac';
+        } 
+
+        // Browser detection
+        if (userAgent.indexOf('firefox') > -1) {
+          browser = 'firefox';
+        } else if (userAgent.indexOf('opr') > -1 || userAgent.indexOf('opera') > -1) {
+          browser = 'opera';
+        } else if (userAgent.indexOf('trident') > -1) {
+          browser = 'ie';
+        } else if (userAgent.indexOf('edg') > -1) {
+          browser = 'edge'; 
+        } else if (userAgent.indexOf('chrome') > -1) {
+          browser = 'chrome';
+        } else if (userAgent.indexOf('safari') > -1) {
+          browser = 'safari';
+        }
+
+        return { device, browser };
+      }
+
+      function populateVoiceList() {
+        const voices = speechSynthesis.getVoices();
+
+        // Clear out the existing options
+        voiceSelect.innerHTML = '<option value="" disabled selected>Select Chinese Voice</option>';
+
+        // We'll only list Chinese voices
+        const chineseVoices = voices.filter(v => v.lang.toLowerCase().includes('zh'));
+
+        chineseVoices.forEach(voice => {
+          const option = document.createElement('option');
+          option.value = voice.name;
+          option.textContent = `${voice.name} (${voice.lang})`;
+          voiceSelect.appendChild(option);
+        });
+
+        // Attempt to set a default voice based on device/browser
+        const { device, browser } = detectDeviceAndBrowser();
+
+        // Our matching conditions:
+        // 1) Windows PC + Chrome => "Huihui"
+        //    Windows PC + Edge   => "Yunyang Online (Natural)"
+        // 2) iOS => "Meijia"
+        // 3) Android + Firefox => "Taiwan" (zh-TW)
+        let targetKeyword = '';
+
+        if (device === 'windows' && browser === 'chrome') {
+          targetKeyword = 'huihui';
+        } else if (device === 'windows' && browser === 'edge') {
+          targetKeyword = 'yunyang'; 
+        } else if (device === 'ios') {
+          targetKeyword = 'meijia';
+        } else if (device === 'android' && browser === 'firefox') {
+          // We'll look for 'taiwan' or exactly "zh-TW"
+          targetKeyword = 'taiwan'; 
+        }
+
+        if (targetKeyword) {
+          for (let i = 0; i < voiceSelect.options.length; i++) {
+            const voiceName = voiceSelect.options[i].value.toLowerCase();
+            if (voiceName.includes(targetKeyword)) {
+              voiceSelect.selectedIndex = i;
+              break;
+            }
+          }
+        }
+      }
+
+      // Populate voice list initially, then re-populate when voices change
+      populateVoiceList();
+      speechSynthesis.onvoiceschanged = populateVoiceList;
+
+      // Read Aloud function
+      function readAloud() {
+        const text = textarea.value.trim();
+        if (!text) {
+          alert('Please enter some text first.');
+          return;
+        }
+
+        // If already speaking, cancel previous utterance
+        if (speechSynthesis.speaking) {
+          speechSynthesis.cancel();
+        }
+
+        utterance = new SpeechSynthesisUtterance(text);
+
+        const selectedVoice = voiceSelect.value;
+        if (!selectedVoice) {
+          alert('Please select a Chinese voice first.');
+          return;
+        }
+
+        // Find the voice object by matching name
+        const voiceObj = speechSynthesis.getVoices().find(v => v.name === selectedVoice);
+        if (voiceObj) {
+          utterance.voice = voiceObj;
+        }
+
+        // Adjust rate, pitch, etc. if desired (you could add range sliders)
+        utterance.rate = 1;
+        utterance.pitch = 1;
+
+        // Enable Pause/Resume button when we start reading
+        pauseResumeBtn.disabled = false;
+        pauseResumeBtn.textContent = 'Pause';
+
+        // When speech ends, disable the Pause/Resume button and reset label
+        utterance.onend = () => {
+          pauseResumeBtn.disabled = true;
+          pauseResumeBtn.textContent = 'Pause';
+        };
+
+        speechSynthesis.speak(utterance);
+      }
+
+      readAloudBtn.addEventListener('click', readAloud);
+
+      // NEW: Pause/Resume Logic
+      const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+      pauseResumeBtn.addEventListener('click', pauseResumeSpeech);
+
+      function pauseResumeSpeech() {
+        if (speechSynthesis.speaking && !speechSynthesis.paused) {
+          speechSynthesis.pause();
+          pauseResumeBtn.textContent = 'Resume';
+        } else if (speechSynthesis.paused) {
+          speechSynthesis.resume();
+          pauseResumeBtn.textContent = 'Pause';
+        }
+      }
+
+      // --------------------------------------------------
+      // NEW Auto-Show/Hide of Button Container (no changes to other logic)
+      // --------------------------------------------------
+      const buttonContainer = document.querySelector('.button-container');
+      // Hide by default
+      buttonContainer.classList.add('hidden');
+
+      const SHOW_ZONE = 150; // how many px from bottom triggers the container to show
+
+      // Show/hide on mouse move near bottom
+      document.addEventListener('mousemove', (e) => {
+        if (window.innerHeight - e.clientY < SHOW_ZONE) {
+          buttonContainer.classList.remove('hidden');
+        } else {
+          buttonContainer.classList.add('hidden');
+        }
+      });
+
+      // Show/hide on touch near bottom
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+          const touchY = e.touches[0].clientY;
+          if (window.innerHeight - touchY < SHOW_ZONE) {
+            buttonContainer.classList.remove('hidden');
+          } else {
+            buttonContainer.classList.add('hidden');
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
