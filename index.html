@@ -620,7 +620,7 @@ Due to differences in browser support for voice synthesis across devices, the re
       const buttonContainer = document.querySelector('.button-container');
       buttonContainer.classList.add('hidden');
 
-      const SHOW_ZONE = 120;
+      const SHOW_ZONE = 180;
       document.addEventListener('mousemove', (e) => {
         if (window.innerHeight - e.clientY < SHOW_ZONE) {
           buttonContainer.classList.remove('hidden');
