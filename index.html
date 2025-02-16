@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chinese Pinyin Converter</title>
     <style>
-      /* ... [NO CHANGES IN STYLES] ... */
       html {
         font-size: 16px;
       }
@@ -194,6 +193,12 @@
         .output-section {
           width: 100%;
           height: auto;
+        }
+        textarea::placeholder {
+          color: #ba2e2e;
+          font-size: 0.7rem;
+          opacity: 1;
+          font-style: italic;
         }
         .output-section.fullscreen {
           padding: 1.5625rem;
@@ -533,7 +538,7 @@
 
         const selectedVoice = voiceSelect.value;
         if (!selectedVoice) {
-          alert('Please select a Chinese voice first. Android users may need to use Firefox for Chinese voice support.');
+          alert('Please select a Chinese voice first.');
           return;
         }
         const voiceObj = speechSynthesis.getVoices().find(v => v.name === selectedVoice);
@@ -593,7 +598,7 @@
       });
 
       // ------------------------------------------------------------------
-      //  >>> MINIMAL CHANGE: Hide Read-Aloud UI on non-iPhone mobile <<<
+      //  >>> Hide Read-Aloud UI on non-iPhone mobile <<<
       // ------------------------------------------------------------------
       {
         const { device } = detectDeviceAndBrowser();
