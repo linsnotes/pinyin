@@ -39,6 +39,10 @@
         display: flex;
         flex-direction: column;
       }
+
+      .hidden {
+        display: none;
+      }
       /* Container holds the input and output sections side by side with spacing */
       .container {
         flex: 1;
@@ -95,6 +99,13 @@
       textarea:focus {
         outline: none;
       }
+      textarea::placeholder {
+        color: #ba2e2e;
+        font-size: 1.5rem;
+        opacity: 1;
+        font-style: italic;
+      }
+
       /* Each hanzi and its corresponding pinyin are arranged in a vertical column */
       .hanzi-pinyin {
         display: inline-flex;
@@ -119,7 +130,7 @@
       .button-container {
         position: fixed;
         /* Position from the bottom: 10px converted to rem (10/16 ≈ 0.625rem) */
-        bottom: 0.625rem;
+        bottom: 0.05rem;
         left: 0;
         width: 100%;
         display: flex;
@@ -174,10 +185,35 @@
         /* Margin-top: 5px converted to rem (5/16 ≈ 0.3125rem) */
         margin-top: 0.3125rem;
       }
+      
+      /* Added: Style for the dropdown to match the label and button style */
+      .button-container select {
+        background-color: #007aff;
+        color: #ffffff;
+        border: none;
+        padding: 0.5rem 0.5rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 0;
+        height: 3.1875rem;
+        width: auto;
+        font-size: 0.8125rem;
+        transition: background-color 0.3s, box-shadow 0.3s;
+        -webkit-appearance: none; /* Remove default styling in Safari */
+        -moz-appearance: none; /* Remove default styling in Firefox */
+        appearance: none; /* Remove default styling */
+      }
+
+      /* Provide a consistent focus style for accessibility */
+      .button-container select:focus {
+        outline: none;
+      }
+
       /* Hide the pinyin annotations when the output section has the 'hide-pinyin' class */
       .output-section.hide-pinyin .pinyin {
         display: none;
       }
+  
       @media (max-width: 768px) {
         /* On smaller screens, hide the first two labels in the button container */
         .button-container label:nth-of-type(1),
@@ -188,9 +224,10 @@
         }
 
         .button-container button,
-        .button-container label {
+        .button-container label,
+        .button-container select {
           height: 2.5rem;
-          width: 6.8rem;
+          width: auto;
         }
         /* Stack the container sections vertically on mobile */
         .container {
@@ -219,7 +256,7 @@
     <div class="container">
       <!-- Input section where the user enters Chinese text -->
       <div class="input-section">
-        <textarea placeholder="Enter Chinese text here..."></textarea>
+        <textarea placeholder="You can enter Chinese text in 3 ways: (1) type it manually, (2) copy and paste it, or (3) upload an Excel file (.xlsx) where Column A contains titles and Column B contains text."></textarea>
       </div>
       <!-- Output section where the converted text with pinyin is displayed -->
       <div class="output-section"></div>
@@ -243,10 +280,21 @@
       <label>Hanzi Color
         <input type="color" id="hanziColor" value="#000000">
       </label>
+      
+      <!-- Excel Upload functionality -->
+      <button id="uploadExcel" type="button">Upload Excel</button>
+      <input type="file" id="excelFileInput" accept=".xlsx" style="display:none">
+      <select id="excelDropdown" class="hidden">
+        <option value="" disabled selected>Select</option>
+      </select>
+      
     </div>
 
     <script src="https://unpkg.com/pinyin-pro"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
+      // Interactive functionality
+
       // Select necessary DOM elements for interactive functionality
       const inputSection = document.querySelector('.input-section');
       const outputSection = document.querySelector('.output-section');
@@ -404,6 +452,66 @@
 
       // Initialize the font sizes using default input values
       updateFontSizes();
+
+      // Excel Upload functionality
+
+      // Get new elements for Excel functionality
+      const uploadExcelButton = document.querySelector('#uploadExcel');
+      const excelFileInput = document.querySelector('#excelFileInput');
+      const excelDropdown = document.querySelector('#excelDropdown');
+
+      // When the "Upload Excel" button is clicked, trigger file input click
+      uploadExcelButton.addEventListener('click', () => {
+        excelFileInput.click();
+      });
+
+      // When a file is selected, parse the Excel file
+      excelFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array'});
+          // Assume we use the first sheet in the workbook
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          // Convert sheet to JSON array (using header row index 0)
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          // Remove any rows that don't have at least 2 columns (title and text)
+          const filteredData = jsonData.filter(row => row.length >= 2);
+          // Populate the dropdown with titles from Column A and store corresponding text in a data attribute
+          excelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
+          filteredData.forEach((row, index) => {
+            const option = document.createElement('option');
+            option.textContent = row[0]; // Title from Column A
+            option.value = index; // Store index (if needed)
+            option.dataset.text = row[1]; // Text from Column B
+            excelDropdown.appendChild(option);
+          });
+          // Show the dropdown if data exists
+          if (filteredData.length > 0) {
+            excelDropdown.classList.remove('hidden');
+          } else {
+            excelDropdown.classList.add('hidden');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+
+      // When the user selects an option from the dropdown, update the textarea and process the text
+      excelDropdown.addEventListener('change', () => {
+        const selectedOption = excelDropdown.options[excelDropdown.selectedIndex];
+        // If the user didn't pick a real option, do nothing:
+        if (!selectedOption.dataset.text) {
+          return; 
+        }
+
+        // Otherwise, set the textarea:
+        textarea.value = selectedOption.dataset.text;
+        processText();
+      });
     </script>
   </body>
 </html>
