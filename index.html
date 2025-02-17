@@ -746,22 +746,17 @@
       });
 
       // ------------------------------------------------------------------
-      //  >>> Hide Read-Aloud UI on non-iPhone mobile <<<
+      //  >>> Hide Read-Aloud UI on mobile <<<
       // ------------------------------------------------------------------
       {
         const { device } = detectDeviceAndBrowser();
-        // Check if it's opened on a mobile device:
-        const isMobile = /Mobi|Android|iPad|iPhone|iPod/i.test(navigator.userAgent);
-
-        // If mobile but NOT iPhone:
-        if (isMobile && device !== 'ios') {
-          // Hide the read-aloud elements
+        // If the device is not a PC (i.e. not Windows or Mac), hide the read-aloud UI
+        if (device !== 'windows' && device !== 'mac') {
           readAloudBtn.style.display = 'none';
           voiceSelect.style.display = 'none';
           pauseResumeBtn.style.display = 'none';
-
           // Alert user
-          alert('The read aloud only works in PC (or iPhone).');
+          alert('The read aloud only works in PC.');
         }
       }
 
