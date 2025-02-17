@@ -29,15 +29,18 @@
         margin: 0;
         padding: 0;
       }
+
+      .hidden {
+        display: none !important;
+      }
+
       body {
         font-family: Arial, sans-serif;
         height: 100vh;
         display: flex;
         flex-direction: column;
       }
-      .hidden {
-        display: none !important;
-      }
+
       .container {
         flex: 1;
         display: flex;
@@ -51,12 +54,13 @@
         border: 1px solid #ccc;
         border-radius: 0.5rem;
       }
-      .output-section {
-        white-space: pre-wrap;
-      }
       .input-section {
         padding-bottom: 1.5rem; /* Add extra space at the bottom */
       }
+      .output-section {
+        white-space: pre-wrap;
+      }
+
       #visitor-counter {
         font-size: 1em;
         text-align: center;
@@ -66,9 +70,11 @@
         font-weight: bold;
         color: #000;
       }
+
       .input-section.fullscreen-hidden {
         display: none;
       }
+
       .output-section.fullscreen {
         position: static;
         top: 0;
@@ -80,12 +86,13 @@
         border: none;
         border-radius: 0;
       }
+      
       textarea {
         width: 100%;
         height: 96%;
         padding: 1rem;
         border: none;
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         margin-bottom: 0.6rem;
         resize: vertical;
         caret-color: #007aff;
@@ -98,6 +105,7 @@
         font-size: 1.3rem;
         opacity: 1;
       }
+
       .hanzi-pinyin {
         display: inline-flex;
         flex-direction: column;
@@ -105,40 +113,48 @@
         margin: 0.125rem;
         line-height: 1.2;
       }
+
       .pinyin {
         font-size: var(--pinyin-size);
         color: var(--pinyin-color);
       }
+
       .hanzi {
         font-size: var(--hanzi-size);
         color: var(--hanzi-color);
         font-family: var(--hanzi-font) !important;
       }
+
+      .output-section.hide-pinyin .pinyin {
+        display: none;
+      }
+
       .button-container {
         position: fixed;
         bottom: 0.05rem;
         left: 0;
         width: 100%;
-        display: flex; 
-        flex-direction: row;
+        display: flex;
+        flex-wrap: nowrap;
         align-items: center;
         justify-content: center;
         gap: 1.25rem;
-        flex-wrap: nowrap;
         z-index: 1001;
         background: transparent;
         padding: 0.9375rem 1.25rem;
         box-shadow: none;
       }
+
       .button-container button,
-      .button-container label {
+      .button-container label,
+      .button-container select {
         align-items: center;
         justify-content: center;
         background-color: #007aff;
-        color: #ffffff;
+        color: #fff;
         border: none;
-        padding: 0.5rem 0.5rem;
-        border-radius: 0.375rem;
+        padding: 0.5rem;
+        border-radius: 0.7rem;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         margin: 0;
         height: 3.1875rem;
@@ -146,94 +162,149 @@
         font-size: 0.8125rem;
         transition: background-color 0.3s, box-shadow 0.3s;
       }
+
       .button-container button:hover,
       .button-container label:hover {
         background-color: #005bb5;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       }
+
       .button-container label {
-        cursor: default;
         display: flex;
         flex-direction: column;
+        cursor: default;
       }
-      .button-container input,
-      .button-container select {
-        margin-top: 0.3125rem;
+
+      .button-container input {
+        width: 2.3rem;
+        border-radius: 0.2rem;
       }
+
+
       .button-container select {
-        background-color: #007aff;
-        color: #ffffff;
-        border: none;
-        padding: 0.5rem 0.5rem;
-        border-radius: 0.375rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin: 0;
-        height: 3.1875rem;
-        width: auto;
-        font-size: 0.8125rem;
-        transition: background-color 0.3s, box-shadow 0.3s;
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
       }
-      #excelDropdown, #voiceSelect {
+
+      #excelDropdown,
+      #voiceSelect {
         width: 10rem;
       }
+
       .button-container select:focus {
         outline: none;
       }
-      .output-section.hide-pinyin .pinyin {
-        display: none;
+
+      /* ----------------------------
+         Popup (Apple-like UI) styles
+         ---------------------------- */
+      #adminPopup {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
       }
-      @media (max-width:1200px) {
-        .button-container label:nth-of-type(1),
-        .button-container label:nth-of-type(2),
-        .button-container label:nth-of-type(3),
-        .button-container label:nth-of-type(4) {
-          display: none;
-        }
+      #adminPopup .admin-popup-content {
+        background: #fff;
+        border-radius: 20px;
+        padding: 20px;
+        max-width: 90%;
+        max-height: 80%;
+        overflow: auto;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      }
+      #adminPopup .admin-popup-content p {
+        font-size: 1.1rem;
+        margin-bottom: 1.25rem;
+      }
+      #adminPopup .admin-popup-content button {
+        background-color: #007aff;
+        border: none;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+      }
+      #adminPopup .admin-popup-content button:active {
+        background-color: #005bb5;
+      }
+      
+      #adminMessage {
+        /* Light blue background for emphasis can be re-enabled if needed */
+        /* background-color: #f0f8ff; */
+        border-left: 1px solid #007aff;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+        font-size: 1.2rem;
+        line-height: 1.5;
+      }
+      #adminMessage p {
+        margin: 0.5rem 0;
+      }
+
+      @media (max-width: 1200px) {
+        /* Hide the first 4 labels and print button */
+        .button-container label:nth-of-type(-n+4),
         .print-btn {
           display: none;
         }
+
+        /* Adjust button, label, and select heights */
         .button-container button,
         .button-container label,
         .button-container select {
           height: 2.5rem;
         }
-        #excelDropdown, #voiceSelect {
-          width: 5rem;
-        }
-        #voiceSelect {
-          width: 100px;
-        }
-        .container {
-          flex-direction: column;
-          height: auto;
-        }
+
+        /* Set widths for Excel dropdown and voice select */
+        #excelDropdown { width: 5rem; }
+        #voiceSelect { width: 100px; }
+
+        /* Stack container sections vertically */
+        .container,
         .input-section,
         .output-section {
+          flex-direction: column;
           width: 100%;
           height: auto;
         }
+
+        /* Adjust padding for the input section */
         .input-section {
-        padding: 0.8rem; /* Add extra space at the bottom */
-        padding-bottom: 2rem;
+          padding: 0.8rem;
+          padding-bottom: 2rem;
         }
+
+        /* Adjust placeholder font size */
         textarea::placeholder {
           font-size: 0.9rem;
         }
+
+        /* Adjust padding for fullscreen output */
         .output-section.fullscreen {
           padding: 1.5625rem;
         }
+
+        /* Style the button container */
         .button-container {
           bottom: 0.8rem;
-          flex-wrap: wrap;
           display: flex;
-          justify-content: center;  
-          align-items: center; 
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
           gap: 0.5rem;
         }
       }
+
       @media print {
         .button-container {
           display: none !important;
@@ -256,67 +327,6 @@
         border: 3px solid;
         border-image-slice: 1;
         animation: borderMove 3s infinite linear;
-      }
-
-
-      /* ----------------------------
-         Popup (Apple-like UI) styles
-         ---------------------------- */
-      #adminPopup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      }
-      #adminPopup .admin-popup-content {
-        background-color: #fff;
-        border-radius: 20px;
-        padding: 20px;
-        max-width: 90%;
-        max-height: 80%;
-        overflow: auto;
-        text-align: center;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-          Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-      }
-      #adminPopup .admin-popup-content p {
-        font-size: 1.1rem;
-        margin-bottom: 1.25rem;
-      }
-      #adminPopup .admin-popup-content button {
-        background-color: #007aff;
-        border: none;
-        color: #fff;
-        padding: 10px 20px;
-        border-radius: 12px;
-        font-size: 16px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        cursor: pointer;
-      }
-      #adminPopup .admin-popup-content button:active {
-        background-color: #005bb5;
-      }
-
-
-      #adminMessage {
-        /* background-color: #f0f8ff;  Light blue background for emphasis */
-        border-left: 1px solid #007aff; /* Blue accent bar */
-        padding: 1rem;
-        margin: 1rem 0;
-        text-align: left;
-        font-size: 1.2rem;
-        line-height: 1.5;
-      }
-
-      #adminMessage p {
-        margin: 0.5rem 0;
       }
 
     </style>
@@ -372,18 +382,23 @@
 
         <div id="adminMessage">
           <p>
-            To access the control menu, move your mouse cursor near the bottom of the screen (on a PC) or tap the bottom of the screen (on a touch device).
+            <strong>Accessing the Control Menu:</strong><br>
+            Move your mouse cursor near the bottom of the screen, OR, Tap near the bottom of the screen.
           </p>
           <p>
-            You can input Chinese text in one of the following ways:<br>
-            (1) Type directly into the editor,<br>
-            (2) Copy and paste your text into the editor, or<br>
-            (3) Upload an Excel file (.xlsx) where Column A contains titles and Column B contains text, then use the 'select' button to choose the text.
+            <strong>Inputting Chinese Text (3 ways):</strong><br>
+            (1) Enter your text directly in the editor.<br>
+            (2) Paste your text into the editor.<br>
+            (3) Upload an Excel file (.xlsx) where: Column A contains titles, Column B contains text. After uploading, use the select button to choose the text.<br>
+            Download the <a href="https://raw.githubusercontent.com/linsnotes/pinyin1/main/sample.xlsx" target="_blank" download>sample Excel file</a>.
           </p>
           <p>
-            Note: The read-aloud feature works only on PCs and iPhones due to browser limitations. For the best experience, please use the Edge browser on a Windows PC.
+            <strong>Note:</strong><br>
+            The read-aloud feature is available only on PCs and iPhones due to browser limitations.<br>
+            For the best experience, please use the Edge browser on a Windows PC.
           </p>
         </div>
+
         <button id="adminPopupCloseBtn">Noted</button>
 
       </div>
