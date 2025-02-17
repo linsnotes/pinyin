@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chinese Pinyin Converter</title>
+    <title>Pinyin Reader</title>
     <script data-goatcounter="https://linsnotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
     <style>
       html {
@@ -62,12 +62,10 @@
         text-align: center;
         color: #333;
       }
-
       #visitor-counter #pageviews {
         font-weight: bold;
         color: #000;
       }
-
       .input-section.fullscreen-hidden {
         display: none;
       }
@@ -85,10 +83,12 @@
       textarea {
         width: 100%;
         height: 96%;
-        padding: 0.625rem;
+        padding: 1rem;
         border: none;
-        margin-bottom: 0.625rem;
+        font-size: 1.5rem;
+        margin-bottom: 0.6rem;
         resize: vertical;
+        caret-color: #007aff;
       }
       textarea:focus {
         outline: none;
@@ -176,19 +176,15 @@
         -moz-appearance: none;
         appearance: none;
       }
-
       #excelDropdown, #voiceSelect {
-          width: 10rem;
+        width: 10rem;
       }
-
       .button-container select:focus {
         outline: none;
       }
       .output-section.hide-pinyin .pinyin {
         display: none;
       }
-
-
       @media (max-width:1200px) {
         .button-container label:nth-of-type(1),
         .button-container label:nth-of-type(2),
@@ -204,11 +200,9 @@
         .button-container select {
           height: 2.5rem;
         }
-
         #excelDropdown, #voiceSelect {
           width: 5rem;
         }
-
         #voiceSelect {
           width: 100px;
         }
@@ -221,10 +215,13 @@
           width: 100%;
           height: auto;
         }
+        .input-section {
+        padding: 0.8rem; /* Add extra space at the bottom */
+        padding-bottom: 2rem;
+        }
         textarea::placeholder {
           font-size: 0.9rem;
         }
-
         .output-section.fullscreen {
           padding: 1.5625rem;
         }
@@ -232,7 +229,6 @@
           bottom: 0.8rem;
           flex-wrap: wrap;
           display: flex;
-          flex-wrap: wrap;
           justify-content: center;  
           align-items: center; 
           gap: 0.5rem;
@@ -244,19 +240,91 @@
         }
       }
 
+      @keyframes borderMove {
+        0% {
+          border-image-source: linear-gradient(45deg, #007aff, #ff007f);
+        }
+        50% {
+          border-image-source: linear-gradient(135deg, #00ff7f, #007aff);
+        }
+        100% {
+          border-image-source: linear-gradient(225deg, #ff007f, #00ff7f);
+        }
+      }
+
+      .textarea-shine {
+        border: 3px solid;
+        border-image-slice: 1;
+        animation: borderMove 3s infinite linear;
+      }
+
+
+      /* ----------------------------
+         Popup (Apple-like UI) styles
+         ---------------------------- */
+      #adminPopup {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      #adminPopup .admin-popup-content {
+        background-color: #fff;
+        border-radius: 20px;
+        padding: 20px;
+        max-width: 90%;
+        max-height: 80%;
+        overflow: auto;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+          Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+      }
+      #adminPopup .admin-popup-content p {
+        font-size: 1.1rem;
+        margin-bottom: 1.25rem;
+      }
+      #adminPopup .admin-popup-content button {
+        background-color: #007aff;
+        border: none;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        cursor: pointer;
+      }
+      #adminPopup .admin-popup-content button:active {
+        background-color: #005bb5;
+      }
+
+
+      #adminMessage {
+        /* background-color: #f0f8ff;  Light blue background for emphasis */
+        border-left: 1px solid #007aff; /* Blue accent bar */
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+        font-size: 1.2rem;
+        line-height: 1.5;
+      }
+
+      #adminMessage p {
+        margin: 0.5rem 0;
+      }
+
     </style>
   </head>
   <body>
     <div class="container">
       <div class="input-section">
-        <textarea placeholder="Move the cursor to the bottom of the page, OR tap the bottom on a touch device, to reveal the control menu.
-        
-You can enter Chinese text in 3 ways:
-(1) manually type it into this box,
-(2) copy and paste it, or
-(3) upload an Excel file (.xlsx) where Column A contains titles and Column B contains text.
-        
-Due to differences in browser support for voice synthesis across devices, the read-aloud function is only available on PCs and iPhones. For the best experience, using this web app on a PC is recommended."></textarea>
+        <textarea class="textarea-shine" placeholder="This is the editor. Refresh the page to view the guide."></textarea>
         <div id="visitor-counter">
           Welcome! You’re visitor #<span id="pageviews">Loading...</span>
         </div>
@@ -286,7 +354,7 @@ Due to differences in browser support for voice synthesis across devices, the re
       <button id="uploadExcel" type="button">Upload</button>
       <input type="file" id="excelFileInput" accept=".xlsx" style="display:none">
       <select id="excelDropdown" class="hidden">
-        <option value="" disabled selected>Select</option>
+        <option value="" disabled selected>select</option>
       </select>
 
       <!-- Voice / Read-Aloud -->
@@ -296,6 +364,29 @@ Due to differences in browser support for voice synthesis across devices, the re
       <button id="readAloudBtn" type="button">Read Aloud</button>
       <button id="pauseResumeBtn" type="button" disabled>Pause</button>
       <button class="print-btn" onclick="window.print()">Print This</button>
+    </div>
+
+    <!-- Popup for admin message -->
+    <div id="adminPopup" class="hidden">
+      <div class="admin-popup-content">
+
+        <div id="adminMessage">
+          <p>
+            To access the control menu, move your mouse cursor near the bottom of the screen (on a PC) or tap the bottom of the screen (on a touch device).
+          </p>
+          <p>
+            You can input Chinese text in one of the following ways:<br>
+            (1) Type directly into the editor,<br>
+            (2) Copy and paste your text into the editor, or<br>
+            (3) Upload an Excel file (.xlsx) where Column A contains titles and Column B contains text, then use the 'select' button to choose the text.
+          </p>
+          <p>
+            Note: The read-aloud feature works only on PCs and iPhones due to browser limitations. For the best experience, please use the Edge browser on a Windows PC.
+          </p>
+        </div>
+        <button id="adminPopupCloseBtn">Noted</button>
+
+      </div>
     </div>
 
     <script src="https://unpkg.com/pinyin-pro"></script>
@@ -518,7 +609,7 @@ Due to differences in browser support for voice synthesis across devices, the re
         } else if (userAgent.indexOf('trident') > -1) {
           browser = 'ie';
         } else if (userAgent.indexOf('edg') > -1) {
-          browser = 'edge'; 
+          browser = 'edge';
         } else if (userAgent.indexOf('chrome') > -1) {
           browser = 'chrome';
         } else if (userAgent.indexOf('safari') > -1) {
@@ -588,8 +679,8 @@ Due to differences in browser support for voice synthesis across devices, the re
           utterance.voice = voiceObj;
         }
 
-        utterance.rate = 1;
-        utterance.pitch = 1;
+        utterance.rate = 0.8;
+        utterance.pitch = 0.9;
 
         pauseResumeBtn.disabled = false;
         pauseResumeBtn.textContent = 'Pause';
@@ -658,28 +749,38 @@ Due to differences in browser support for voice synthesis across devices, the re
           alert('The read aloud only works in PC (or iPhone).');
         }
       }
+
+      // -------------------------
+      // Visitor Counter and Admin Popup
+      // -------------------------
       document.addEventListener('DOMContentLoaded', () => {
-            const pv = document.getElementById('pageviews');
+        // Visitor counter
+        const pv = document.getElementById('pageviews');
+        if (pv !== null) {
+          // Strip trailing slash (if any) so the path matches GoatCounter
+          const uri = location.pathname.replace(/\/$/, '');
+          // Build the JSON endpoint URL for your domain
+          const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              // 'data.count' comes back as a string with possible whitespace
+              const count = data.count.replace(/\s/g, '');
+              // Format it with commas, etc.
+              pv.innerText = new Intl.NumberFormat().format(count);
+            })
+            .catch((error) => {
+              // Fallback if something goes wrong
+              pv.innerText = '1';
+            });
+        }
 
-            if (pv !== null) {
-                  // Strip trailing slash (if any) so the path matches GoatCounter
-                  const uri = location.pathname.replace(/\/$/, '');
-                  // Build the JSON endpoint URL for your domain
-                  const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
-
-                  fetch(url)
-                        .then((response) => response.json())
-                        .then((data) => {
-                              // 'data.count' comes back as a string with possible whitespace
-                              const count = data.count.replace(/\s/g, '');
-                              // Format it with commas, etc.
-                              pv.innerText = new Intl.NumberFormat().format(count);
-                        })
-                        .catch((error) => {
-                              // Fallback if something goes wrong
-                              pv.innerText = '1';
-                        });
-            }
+        // Show the admin popup
+        const adminPopup = document.getElementById('adminPopup');
+        adminPopup.classList.remove('hidden');
+        document.getElementById('adminPopupCloseBtn').addEventListener('click', () => {
+          adminPopup.classList.add('hidden');
+        });
       });
     </script>
   </body>
