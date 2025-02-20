@@ -84,5 +84,5 @@ Contributions are welcome. Please feel free to submit issues or pull requests vi
 
 ## Licence
 
-This project is licensed under the [MIT Licence](LICENSE).
+This project is licensed under the MIT Licence.
 
