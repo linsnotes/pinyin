@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinyin Reader</title>
+    <script data-goatcounter="https://linsnotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <style>
+      html {
+        font-size: 16px;
+      }
+      :root {
+        --hanzi-size: 1.5rem;
+        --pinyin-size: 0.875rem;
+        --pinyin-color: #666;
+        --hanzi-color: #000;
+        --hanzi-font: 
+          "STKaiti",
+          "Kaiti SC",
+          "Kaiti TC",
+          "KaiTi",
+          "楷体",
+          "华文楷体",
+          "Apple Kaiti",
+          serif;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      .hidden {
+        display: none !important;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .container {
+        flex: 1;
+        display: flex;
+        gap: 1.25rem;
+        padding: 1.25rem;
+      }
+      .input-section,
+      .output-section {
+        flex: 1;
+        padding: 1.25rem;
+        border: 1px solid #ccc;
+        border-radius: 0.5rem;
+      }
+      .input-section {
+        padding-bottom: 1.5rem; /* Add extra space at the bottom */
+      }
+      .output-section {
+        white-space: pre-wrap;
+      }
+      #visitor-counter {
+        font-size: 1em;
+        text-align: center;
+        color: #333;
+      }
+      #visitor-counter #pageviews {
+        font-weight: bold;
+        color: #000;
+      }
+      .input-section.fullscreen-hidden {
+        display: none;
+      }
+      .output-section.fullscreen {
+        position: static;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1000;
+        padding: 3.75rem;
+        border: none;
+        border-radius: 0;
+      }
+      textarea {
+        width: 100%;
+        height: 96%;
+        padding: 1rem;
+        border: none;
+        font-size: 1.2rem;
+        margin-bottom: 0.6rem;
+        resize: vertical;
+        caret-color: #007aff;
+      }
+      textarea:focus {
+        outline: none;
+      }
+      textarea::placeholder {
+        color: #164587;
+        font-size: 1.3rem;
+        opacity: 1;
+      }
+      .hanzi-pinyin {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0.125rem;
+        line-height: 1.2;
+      }
+      .pinyin {
+        font-size: var(--pinyin-size);
+        color: var(--pinyin-color);
+      }
+      .hanzi {
+        font-size: var(--hanzi-size);
+        color: var(--hanzi-color);
+        font-family: var(--hanzi-font) !important;
+      }
+      .output-section.hide-pinyin .pinyin {
+        display: none;
+      }
+      .button-container {
+        position: fixed;
+        bottom: 0.05rem;
+        left: 0;
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        z-index: 1001;
+        background: transparent;
+        padding: 0.9375rem 1.25rem;
+        box-shadow: none;
+      }
+      .button-container button,
+      .button-container label,
+      .button-container select {
+        align-items: center;
+        justify-content: center;
+        background-color: #007aff;
+        color: #fff;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 0.7rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin: 0;
+        height: 3.1875rem;
+        width: auto;
+        font-size: 0.8125rem;
+        transition: background-color 0.3s, box-shadow 0.3s;
+      }
+      .button-container button:hover,
+      .button-container label:hover {
+        background-color: #005bb5;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+      .button-container label {
+        display: flex;
+        flex-direction: column;
+        cursor: default;
+      }
+      .button-container input {
+        width: 2.3rem;
+        border-radius: 0.2rem;
+      }
+      .button-container select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+      #excelDropdown,
+      #voiceSelect {
+        width: 10rem;
+      }
+      .button-container select:focus {
+        outline: none;
+      }
+      /* ----------------------------
+         Popup (Apple-like UI) styles
+         ---------------------------- */
+      #adminPopup {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      #adminPopup .admin-popup-content {
+        background: #fff;
+        border-radius: 20px;
+        padding: 20px;
+        max-width: 90%;
+        max-height: 80%;
+        overflow: auto;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+      }
+      #adminPopup .admin-popup-content p {
+        font-size: 1.1rem;
+        margin-bottom: 1.25rem;
+      }
+      #adminPopup .admin-popup-content button {
+        background-color: #007aff;
+        border: none;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 16px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+      }
+      #adminPopup .admin-popup-content button:active {
+        background-color: #005bb5;
+      }
+      #adminMessage {
+        /* Light blue background for emphasis can be re-enabled if needed */
+        /* background-color: #f0f8ff; */
+        border-left: 1px solid #007aff;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+        font-size: 1.2rem;
+        line-height: 1.5;
+      }
+      #adminMessage p {
+        margin: 0.5rem 0;
+      }
+      @media (max-width: 1200px) {
+        /* Hide the first 4 labels and print button */
+        .button-container label:nth-of-type(-n+4),
+        .print-btn {
+          display: none;
+        }
+        /* Adjust button, label, and select heights */
+        .button-container button,
+        .button-container label,
+        .button-container select {
+          height: 2.5rem;
+        }
+        /* Set widths for Excel dropdown and voice select */
+        #excelDropdown { width: 4rem; }
+        #voiceSelect { width: 100px; }
+        /* Stack container sections vertically */
+        .container,
+        .input-section,
+        .output-section {
+          flex-direction: column;
+          width: 100%;
+          height: auto;
+        }
+        /* Adjust padding for the input section */
+        .input-section {
+          padding: 0.8rem;
+          padding-bottom: 2rem;
+        }
+        /* Adjust placeholder font size */
+        textarea::placeholder {
+          font-size: 0.9rem;
+        }
+        /* Adjust padding for fullscreen output */
+        .output-section.fullscreen {
+          padding: 0.3rem;
+        }
+        /* Style the button container */
+        .button-container {
+          bottom: 0.8rem;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          align-items: center;
+          gap: 0.5rem;
+        }
+      }
+      @media print {
+        .button-container {
+          display: none !important;
+        }
+      }
+      @keyframes borderMove {
+        0% {
+          border-image-source: linear-gradient(45deg, #007aff, #ff007f);
+        }
+        50% {
+          border-image-source: linear-gradient(135deg, #00ff7f, #007aff);
+        }
+        100% {
+          border-image-source: linear-gradient(225deg, #ff007f, #00ff7f);
+        }
+      }
+      .textarea-shine {
+        border: 3px solid;
+        border-image-slice: 1;
+        animation: borderMove 3s infinite linear;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="input-section">
+        <textarea class="textarea-shine" placeholder="This is the editor. Input your Chinese text here. Refresh the page to view the guide."></textarea>
+        <div id="visitor-counter">
+          Welcome! You’re visitor #<span id="pageviews">Loading...</span>
+        </div>
+      </div>
+      <div class="output-section"></div>
+    </div>
+    <div class="button-container">
+      <button id="toggleInput" type="button">Hide Editor</button>
+      <button id="togglePinyin" type="button">Hide Pinyin</button>
+      <label>Hanzi Size
+        <input type="number" id="hanziSize" min="12" max="100" value="24">
+      </label>
+      <label>Pinyin Size
+        <input type="number" id="pinyinSize" min="10" max="100" value="14">
+      </label>
+      <label>Pinyin Color
+        <input type="color" id="pinyinColor" value="#666666">
+      </label>
+      <label>Hanzi Color
+        <input type="color" id="hanziColor" value="#000000">
+      </label>
+      <!-- Excel Upload -->
+      <button id="uploadExcel" type="button">Upload</button>
+      <input type="file" id="excelFileInput" accept=".xlsx" style="display:none">
+      <select id="excelDropdown" class="hidden">
+        <option value="" disabled selected>select</option>
+      </select>
+      <!-- Voice / Read-Aloud -->
+      <select id="voiceSelect">
+        <option value="" disabled selected>Select Voice</option>
+      </select>
+      <button id="readAloudBtn" type="button">Read Aloud</button>
+      <button id="pauseResumeBtn" type="button" disabled>Pause</button>
+      <button class="print-btn" onclick="window.print()">Print This</button>
+    </div>
+    <!-- Popup for admin message -->
+    <div id="adminPopup" class="hidden">
+      <div class="admin-popup-content">
+        <div id="adminMessage">
+          <p>
+            <strong>Accessing the Control Menu:</strong><br>
+            Move your mouse cursor near the bottom of the screen, OR, Tap near the bottom of the screen.
+          </p>
+          <p>
+            <strong>3 Ways to Input Chinese Text:</strong><br>
+            (1) Enter your text directly in the editor;<br>
+            (2) Paste your text into the editor;<br>
+            (3) Upload an Excel file (.xlsx) where: Column A contains titles, Column B contains text. After uploading, use the select button to choose the text.<br>
+            For the correct Excel format, refer to this <a href="https://docs.google.com/spreadsheets/d/1LZJ1pCm-XcmSyleROwRdPvwGbcUi52JOePWksTDVKus/edit?usp=sharing" target="_blank">Google Sheet</a>. Create your own file or download the Google Sheet and add your text. Ensure it is a Microsoft Excel (.xlsx) file.
+          </p>
+          <p>
+            <strong>Note:</strong><br>
+            The read-aloud feature is available only on PCs due to limitations in mobile phone browsers.<br>
+            For the best experience, please use the Edge browser on a Windows PC.<br>
+            <a href="https://linsnotes.com/apps/">Other Chinese Learning Tools</a>
+          </p>
+        </div>
+        <button id="adminPopupCloseBtn">Noted</button>
+      </div>
+    </div>
+    <script src="https://unpkg.com/pinyin-pro"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+      // -------------------------
+      // Pinyin Processing Logic
+      // -------------------------
+      const inputSection = document.querySelector('.input-section');
+      const outputSection = document.querySelector('.output-section');
+      const textarea = document.querySelector('textarea');
+      const toggleInput = document.querySelector('#toggleInput');
+      const togglePinyin = document.querySelector('#togglePinyin');
+      const hanziSize = document.querySelector('#hanziSize');
+      const pinyinSize = document.querySelector('#pinyinSize');
+      const pinyinColor = document.querySelector('#pinyinColor');
+      const hanziColor = document.querySelector('#hanziColor');
+      textarea.addEventListener('input', debounce(processText, 300));
+      toggleInput.addEventListener('click', () => {
+        inputSection.classList.toggle('fullscreen-hidden');
+        outputSection.classList.toggle('fullscreen');
+        toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
+          ? 'Show Editor'
+          : 'Hide Editor';
+      });
+      togglePinyin.addEventListener('click', () => {
+        outputSection.classList.toggle('hide-pinyin');
+        togglePinyin.textContent = outputSection.classList.contains('hide-pinyin')
+          ? 'Show Pinyin'
+          : 'Hide Pinyin';
+      });
+      hanziSize.addEventListener('input', updateFontSizes);
+      pinyinSize.addEventListener('input', updateFontSizes);
+      pinyinColor.addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--pinyin-color', e.target.value);
+      });
+      hanziColor.addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--hanzi-color', e.target.value);
+      });
+      async function processText() {
+        const rawText = textarea.value;
+        try {
+          const pinyinData = await getPinyinData(rawText);
+          const tempDiv = document.createElement('div');
+          tempDiv.textContent = rawText;
+          processTextNodes(tempDiv, pinyinData);
+          outputSection.innerHTML = '';
+          outputSection.appendChild(tempDiv);
+        } catch (error) {
+          console.error('Error processing text:', error);
+        }
+      }
+      async function getPinyinData(text) {
+        const options = {
+          type: 'array',
+          toneType: 'symbol',
+          pattern: 'pinyin',
+          multiple: true,
+          removeNonZh: false,
+          nonZh: 'spaced',
+          v: false,
+          mode: 'normal'
+        };
+        try {
+          const result = pinyinPro.pinyin(text, options);
+          return result.map((pinyin, index) => ({
+            hanzi: text[index],
+            pinyin: pinyin
+          }));
+        } catch (error) {
+          console.error('Error fetching Pinyin data:', error);
+          return [];
+        }
+      }
+      function processTextNodes(node, pinyinData) {
+        const walker = document.createTreeWalker(
+          node,
+          NodeFilter.SHOW_TEXT,
+          null,
+          false
+        );
+        let pinyinIndex = 0;
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+          const chars = textNode.nodeValue.split('');
+          const parent = textNode.parentNode;
+          const fragment = document.createDocumentFragment();
+          chars.forEach((char) => {
+            if (char === '\n') {
+              const br = document.createElement('br');
+              fragment.appendChild(br);
+              if (pinyinIndex < pinyinData.length) pinyinIndex++;
+            } else {
+              const wrapper = document.createElement('span');
+              wrapper.className = 'hanzi-pinyin';
+              if (isHanzi(char) && pinyinIndex < pinyinData.length) {
+                wrapper.innerHTML = `
+                  <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
+                  <span class="hanzi">${char}</span>
+                `;
+                pinyinIndex++;
+              } else {
+                wrapper.innerHTML = `
+                  <span class="pinyin"></span>
+                  <span class="hanzi">${char}</span>
+                `;
+                if (pinyinIndex < pinyinData.length) pinyinIndex++;
+              }
+              fragment.appendChild(wrapper);
+            }
+          });
+          parent.replaceChild(fragment, textNode);
+        }
+      }
+      function isHanzi(char) {
+        return /[\u4e00-\u9fa5]/.test(char);
+      }
+      function updateFontSizes() {
+        const baseFontSize = 16;
+        document.documentElement.style.setProperty('--hanzi-size', `${(hanziSize.value / baseFontSize).toFixed(3)}rem`);
+        document.documentElement.style.setProperty('--pinyin-size', `${(pinyinSize.value / baseFontSize).toFixed(3)}rem`);
+      }
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+      updateFontSizes();
+      // -------------------------
+      // Excel Upload
+      // -------------------------
+      const uploadExcelButton = document.querySelector('#uploadExcel');
+      const excelFileInput = document.querySelector('#excelFileInput');
+      const excelDropdown = document.querySelector('#excelDropdown');
+      uploadExcelButton.addEventListener('click', () => {
+        excelFileInput.click();
+      });
+      excelFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, {type: 'array'});
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          const filteredData = jsonData.filter(row => row.length >= 2);
+          excelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
+          filteredData.forEach((row, index) => {
+            const option = document.createElement('option');
+            option.textContent = row[0];
+            option.value = index;
+            option.dataset.text = row[1];
+            excelDropdown.appendChild(option);
+          });
+          if (filteredData.length > 0) {
+            excelDropdown.classList.remove('hidden');
+          } else {
+            excelDropdown.classList.add('hidden');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+      excelDropdown.addEventListener('change', () => {
+        const selectedOption = excelDropdown.options[excelDropdown.selectedIndex];
+        if (!selectedOption.dataset.text) {
+          return; 
+        }
+        textarea.value = selectedOption.dataset.text;
+        processText();
+      });
+      // -------------------------
+      // Speech Synthesis
+      // -------------------------
+      const voiceSelect = document.getElementById('voiceSelect');
+      const readAloudBtn = document.getElementById('readAloudBtn');
+      const pauseResumeBtn = document.getElementById('pauseResumeBtn');
+      let utterance = null;
+      let isPaused = false;
+      let originalText = '';
+      let resumeOffset = 0; // tracks the index in originalText where speaking paused
+      let isEdge = false;
+      function detectDeviceAndBrowser() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        let device = 'other'; 
+        let browser = 'other';
+        if (/android/i.test(userAgent)) {
+          device = 'android';
+        } else if (/ipad|iphone|ipod/.test(userAgent) && !window.MSStream) {
+          device = 'ios';
+        } else if (/windows nt/i.test(userAgent)) {
+          device = 'windows';
+        } else if (/macintosh/i.test(userAgent) && !/iphone|ipad/.test(userAgent)) {
+          device = 'mac';
+        } 
+        if (userAgent.indexOf('firefox') > -1) {
+          browser = 'firefox';
+        } else if (userAgent.indexOf('opr') > -1 || userAgent.indexOf('opera') > -1) {
+          browser = 'opera';
+        } else if (userAgent.indexOf('trident') > -1) {
+          browser = 'ie';
+        } else if (userAgent.indexOf('edg') > -1) {
+          browser = 'edge';
+        } else if (userAgent.indexOf('chrome') > -1) {
+          browser = 'chrome';
+        } else if (userAgent.indexOf('safari') > -1) {
+          browser = 'safari';
+        }
+        return { device, browser };
+      }
+      function populateVoiceList() {
+        const voices = speechSynthesis.getVoices();
+        // Clear the select element.
+        voiceSelect.innerHTML = '';
+        // Filter for Chinese voices.
+        const chineseVoices = voices.filter(v => v.lang.toLowerCase().includes('zh'));
+        // If there are none, add a placeholder.
+        if (chineseVoices.length === 0) {
+          const option = document.createElement('option');
+          option.value = "";
+          option.textContent = "No Chinese voices available";
+          option.disabled = true;
+          voiceSelect.appendChild(option);
+          return;
+        }
+        // Append an option for each available Chinese voice.
+        chineseVoices.forEach(voice => {
+          const option = document.createElement('option');
+          option.value = voice.name;
+          option.textContent = `${voice.name} (${voice.lang})`;
+          voiceSelect.appendChild(option);
+        });
+        const { device, browser } = detectDeviceAndBrowser();
+        let targetKeyword = '';
+        if (device === 'windows' && browser === 'edge') {
+          targetKeyword = 'yunyang';
+        } else if (device === 'windows' && browser === 'chrome') {
+          targetKeyword = 'huihui';
+        } else if (device === 'ios') {
+          targetKeyword = 'meijia';
+        } else if (device === 'android' && browser === 'firefox') {
+          targetKeyword = 'taiwan';
+        }
+        let found = false;
+        if (targetKeyword) {
+          for (let i = 0; i < voiceSelect.options.length; i++) {
+            const voiceName = voiceSelect.options[i].value.toLowerCase();
+            if (voiceName.includes(targetKeyword)) {
+              voiceSelect.selectedIndex = i;
+              found = true;
+              break;
+            }
+          }
+        }
+        if (!found) {
+          // For non-Edge browsers, if no matching target is found, select the first available voice.
+          voiceSelect.selectedIndex = 0;
+        }
+      }
+      populateVoiceList();
+      speechSynthesis.onvoiceschanged = populateVoiceList;
+      // Determine if we’re running in Edge on Windows.
+      const { device, browser } = detectDeviceAndBrowser();
+      if (device === 'windows' && browser === 'edge') {
+        isEdge = true;
+      }
+      function readAloud() {
+        const text = textarea.value.trim();
+        if (!text) {
+          alert('Please enter some text first.');
+          return;
+        }
+        if (speechSynthesis.speaking) {
+          speechSynthesis.cancel();
+        }
+        utterance = new SpeechSynthesisUtterance(text);
+        const selectedVoice = voiceSelect.value;
+        if (!selectedVoice) {
+          alert('Please select a Chinese voice first.');
+          return;
+        }
+        const voiceObj = speechSynthesis.getVoices().find(v => v.name === selectedVoice);
+        if (voiceObj) {
+          utterance.voice = voiceObj;
+        }
+        utterance.rate = 0.8;
+        utterance.pitch = 0.9;
+        pauseResumeBtn.disabled = false;
+        pauseResumeBtn.textContent = 'Pause';
+        utterance.onend = () => {
+          pauseResumeBtn.disabled = true;
+          pauseResumeBtn.textContent = 'Pause';
+        };
+        if (isEdge) {
+          // For Edge: save the full text and start from index 0.
+          originalText = text;
+          resumeOffset = 0;
+          // Update resumeOffset as words are spoken.
+          utterance.onboundary = (event) => {
+            if (event.name === 'word') {
+              resumeOffset = event.charIndex;
+            }
+          };
+        }
+        speechSynthesis.speak(utterance);
+      }
+      readAloudBtn.addEventListener('click', readAloud);
+      pauseResumeBtn.addEventListener('click', () => {
+        if (isEdge) {
+          if (!isPaused) {
+            // Simulate pause for Edge: cancel current utterance.
+            speechSynthesis.cancel();
+            isPaused = true;
+            pauseResumeBtn.textContent = 'Resume';
+          } else {
+            // Resume: create a new utterance from the last recorded offset.
+            const remainingText = originalText.substring(resumeOffset);
+            if (remainingText.trim().length > 0) {
+              const resumedUtterance = new SpeechSynthesisUtterance(remainingText);
+              resumedUtterance.voice = speechSynthesis.getVoices().find(v => v.name === voiceSelect.value);
+              resumedUtterance.rate = 0.8;
+              resumedUtterance.pitch = 0.9;
+              const baseOffset = resumeOffset;
+              resumedUtterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                  resumeOffset = baseOffset + event.charIndex;
+                }
+              };
+              resumedUtterance.onend = () => {
+                pauseResumeBtn.disabled = true;
+                pauseResumeBtn.textContent = 'Pause';
+                isPaused = false;
+              };
+              speechSynthesis.speak(resumedUtterance);
+            }
+            isPaused = false;
+            pauseResumeBtn.textContent = 'Pause';
+          }
+        } else {
+          // Standard pause/resume for other browsers.
+          if (speechSynthesis.speaking && !speechSynthesis.paused) {
+            speechSynthesis.pause();
+            pauseResumeBtn.textContent = 'Resume';
+          } else if (speechSynthesis.paused) {
+            speechSynthesis.resume();
+            pauseResumeBtn.textContent = 'Pause';
+          }
+        }
+      });
+      // -------------------------
+      // Auto-Show/Hide of Button Container
+      // -------------------------
+      const buttonContainer = document.querySelector('.button-container');
+      buttonContainer.classList.add('hidden');
+      const SHOW_ZONE = 180;
+      document.addEventListener('mousemove', (e) => {
+        if (window.innerHeight - e.clientY < SHOW_ZONE) {
+          buttonContainer.classList.remove('hidden');
+        } else {
+          buttonContainer.classList.add('hidden');
+        }
+      });
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+          const touchY = e.touches[0].clientY;
+          if (window.innerHeight - touchY < SHOW_ZONE) {
+            buttonContainer.classList.remove('hidden');
+          } else {
+            buttonContainer.classList.add('hidden');
+          }
+        }
+      });
+      // ------------------------------------------------------------------
+      //  >>> Hide Read-Aloud UI on mobile <<<
+      // ------------------------------------------------------------------
+      {
+        const { device } = detectDeviceAndBrowser();
+        // If the device is not a PC (i.e. not Windows or Mac), hide the read-aloud UI.
+        if (device !== 'windows' && device !== 'mac') {
+          readAloudBtn.style.display = 'none';
+          voiceSelect.style.display = 'none';
+          pauseResumeBtn.style.display = 'none';
+          alert('Note: The read-aloud feature is available only on PCs due to limitations in mobile phone browsers.');
+        }
+      }
+      // -------------------------
+      // Visitor Counter and Admin Popup
+      // -------------------------
+      document.addEventListener('DOMContentLoaded', () => {
+        const pv = document.getElementById('pageviews');
+        if (pv !== null) {
+          const uri = location.pathname.replace(/\/$/, '');
+          const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              const count = data.count.replace(/\s/g, '');
+              pv.innerText = new Intl.NumberFormat().format(count);
+            })
+            .catch((error) => {
+              pv.innerText = '1';
+            });
+        }
+        const adminPopup = document.getElementById('adminPopup');
+        adminPopup.classList.remove('hidden');
+        document.getElementById('adminPopupCloseBtn').addEventListener('click', () => {
+          adminPopup.classList.add('hidden');
+        });
+      });
+    </script>
+  </body>
+</html>
