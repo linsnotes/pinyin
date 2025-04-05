@@ -7,6 +7,8 @@
     <script data-goatcounter="https://linsnotes.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha512-JAlHYZ7sDXF98EQK5HABwb2k1jplfFP93BqY4B6fdHSh0XiAqIjO4gyXe8tdNFdHPYrg75grUX853FHYCzw3Dg==" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.26.0/dist/index.min.js" integrity="sha512-59m22Tdj5NpJr4WpRAJl+HXy96LWKmG2f3drO7abM5kW6WaI7nMHVx7cwJON1z6OdCH0HaZVMnXnRsdFeHQtDA==" crossorigin="anonymous"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha512-AXreDm/maQt99+BKeuV5VUY8x0xBAZPX6OYenHRlRwG/C35PKcZ7GQXITTR8Zf3cLHeTfwVDLEMBBPf7laKtAA==" crossorigin="anonymous"></script>
+    <!-- Added Split.js library -->
+    <script src="https://unpkg.com/split.js/dist/split.min.js"></script>
     <style>
       html {
         font-size: 16px;
@@ -16,7 +18,7 @@
         --pinyin-size: 0.875rem;
         --pinyin-color: #666;
         --hanzi-color: #000;
-        --hanzi-font: 
+        --hanzi-font:
           "STKaiti",
           "Kaiti SC",
           "Kaiti TC",
@@ -39,19 +41,23 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
+        overflow: hidden; /* Prevent body scrollbars when splitting */
       }
       .container {
         flex: 1;
         display: flex;
-        gap: 1.25rem;
+        /* gap: 1.25rem; Removed gap, Split.js gutter manages space */
         padding: 1.25rem;
+        overflow: hidden; /* Prevent container scrollbars */
       }
       .input-section,
       .output-section {
-        flex: 1;
+        /* flex: 1; Flex sizing now handled by Split.js */
         padding: 1.25rem;
         border: 1px solid #ccc;
         border-radius: 0.5rem;
+        overflow-y: auto; /* Allow scrolling within sections */
+        height: 100%; /* Needed for Split.js */
       }
       .input-section {
         padding-bottom: 1.5rem; /* Add extra space at the bottom */
@@ -68,28 +74,63 @@
         font-weight: bold;
         color: #000;
       }
+
+      /* --- Split.js Gutter Styling --- */
+      .gutter {
+          background-color: transparent; /* Make it 'invisible' */
+          background-repeat: no-repeat;
+          background-position: 50%;
+          transition: background-color 0.2s ease-in-out;
+      }
+
+      .gutter.gutter-horizontal {
+          cursor: col-resize;
+      }
+      /* Optional: Subtle hover effect */
+      .gutter.gutter-horizontal:hover {
+           background-color: rgba(0, 122, 255, 0.1); /* Subtle blue hint */
+      }
+
+      /* Ensure flex properties are set for split panes */
+      .split {
+           display: flex;
+           flex-direction: row; /* Explicitly set for desktop */
+      }
+
+      /* --- Toggle Input / Fullscreen logic with Split.js --- */
       .input-section.fullscreen-hidden {
-        display: none;
+           display: block; /* Override display: none to allow flex-basis */
+           flex-basis: 0 !important;
+           overflow: hidden !important; /* Hide content */
+           padding-left: 0 !important;
+           padding-right: 0 !important;
+           border-left: none !important;
+           border-right: none !important;
+           min-width: 0 !important; /* Allow shrinking to zero */
       }
       .output-section.fullscreen {
-        position: static;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 1000;
-        padding: 3.75rem;
-        border: none;
-        border-radius: 0;
+           /* When input is hidden, output takes full space */
+           flex-basis: 100% !important;
+           /* Fullscreen styles below are mostly for mobile fallback */
+           position: static; /* Reset position */
+           top: auto;
+           left: auto;
+           right: auto;
+           bottom: auto;
+           z-index: auto;
+           border: 1px solid #ccc; /* Restore border */
+           border-radius: 0.5rem; /* Restore radius */
       }
+
       textarea {
         width: 100%;
-        height: 96%;
+        /* Adjust height calculation slightly - consider parent padding */
+        height: calc(100% - 3em); /* Adjust based on visitor counter height */
         padding: 1rem;
         border: none;
         font-size: 1.2rem;
         margin-bottom: 0.6rem;
-        resize: vertical;
+        resize: none; /* Disable textarea's own resize */
         caret-color: #007aff;
       }
       textarea:focus {
@@ -218,8 +259,6 @@
         background-color: #005bb5;
       }
       #adminMessage {
-        /* Light blue background for emphasis can be re-enabled if needed */
-        /* background-color: #f0f8ff; */
         border-left: 1px solid #007aff;
         padding: 1rem;
         margin: 1rem 0;
@@ -230,6 +269,8 @@
       #adminMessage p {
         margin: 0.5rem 0;
       }
+
+      /* --- Responsive adjustments --- */
       @media (max-width: 1200px) {
         /* Hide the first 4 labels and print button */
         .button-container label:nth-of-type(-n+4),
@@ -245,27 +286,54 @@
         /* Set widths for Excel dropdown and voice select */
         #excelDropdown { width: 4rem; }
         #voiceSelect { width: 100px; }
-        /* Stack container sections vertically */
-        .container,
-        .input-section,
-        .output-section {
-          flex-direction: column;
-          width: 100%;
-          height: auto;
+
+        /* --- Responsive Split.js --- */
+        /* Change container to vertical layout */
+        .container.split, .container { /* Target both states */
+           flex-direction: column;
+           height: calc(100vh - 6rem); /* Adjust height considering button bar */
+           padding: 0.5rem; /* Reduce padding */
         }
-        /* Adjust padding for the input section */
-        .input-section {
-          padding: 0.8rem;
-          padding-bottom: 2rem;
-        }
+        /* Reset flex-basis and set width/height for vertical layout */
+       .input-section,
+       .output-section {
+           flex-basis: auto !important; /* Let flexbox handle height distribution */
+           width: 100% !important; /* Ensure full width */
+           height: 50% !important; /* Roughly equal height */
+           min-height: 100px; /* Minimum height */
+           overflow-y: auto; /* Ensure scrolling */
+           margin-bottom: 0.5rem; /* Add gap */
+       }
+       .input-section {
+           padding: 0.8rem;
+           padding-bottom: 2rem;
+       }
+       /* Hide the horizontal gutter */
+       .gutter.gutter-horizontal {
+           display: none !important;
+       }
+       /* Adjust fullscreen output padding for mobile */
+       .output-section.fullscreen {
+          padding: 0.3rem;
+          height: 100% !important; /* Take full height when input is hidden */
+          margin-bottom: 0;
+       }
+       .input-section.fullscreen-hidden {
+           display: none !important; /* Completely hide on mobile */
+           height: 0 !important;
+           padding: 0 !important;
+           border: none !important;
+           margin-bottom: 0 !important;
+       }
+
         /* Adjust placeholder font size */
         textarea::placeholder {
           font-size: 0.9rem;
         }
-        /* Adjust padding for fullscreen output */
-        .output-section.fullscreen {
-          padding: 0.3rem;
-        }
+         textarea {
+           height: calc(100% - 2em); /* Adjust height for mobile */
+         }
+
         /* Style the button container */
         .button-container {
           bottom: 0.8rem;
@@ -274,11 +342,28 @@
           justify-content: center;
           align-items: center;
           gap: 0.5rem;
+          position: relative; /* Change from fixed for mobile */
+          height: auto; /* Allow wrapping */
+          padding: 0.5rem;
         }
       }
+
       @media print {
         .button-container {
           display: none !important;
+        }
+        .input-section {
+          display: none !important; /* Don't print input */
+        }
+        .output-section {
+           width: 100%;
+           height: auto;
+           border: none;
+           overflow: visible;
+        }
+        .container {
+            height: auto;
+            display: block;
         }
       }
       @keyframes borderMove {
@@ -363,10 +448,18 @@
         <button id="adminPopupCloseBtn">Noted</button>
       </div>
     </div>
+
     <script>
-      // -------------------------
-      // Pinyin Processing Logic
-      // -------------------------
+      // --- Debounce Utility ---
+      function debounce(fn, delay) {
+        let timeout;
+        return (...args) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => fn.apply(this, args), delay);
+        };
+      }
+
+      // --- DOM Element References ---
       const inputSection = document.querySelector('.input-section');
       const outputSection = document.querySelector('.output-section');
       const textarea = document.querySelector('textarea');
@@ -376,20 +469,20 @@
       const pinyinSize = document.querySelector('#pinyinSize');
       const pinyinColor = document.querySelector('#pinyinColor');
       const hanziColor = document.querySelector('#hanziColor');
+      const container = document.querySelector('.container'); // Added container ref
+
+      // -------------------------
+      // Pinyin Processing Logic
+      // -------------------------
       textarea.addEventListener('input', debounce(processText, 300));
-      toggleInput.addEventListener('click', () => {
-        inputSection.classList.toggle('fullscreen-hidden');
-        outputSection.classList.toggle('fullscreen');
-        toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
-          ? 'Show Editor'
-          : 'Hide Editor';
-      });
+
       togglePinyin.addEventListener('click', () => {
         outputSection.classList.toggle('hide-pinyin');
         togglePinyin.textContent = outputSection.classList.contains('hide-pinyin')
           ? 'Show Pinyin'
           : 'Hide Pinyin';
       });
+
       hanziSize.addEventListener('input', updateFontSizes);
       pinyinSize.addEventListener('input', updateFontSizes);
       pinyinColor.addEventListener('input', (e) => {
@@ -398,19 +491,30 @@
       hanziColor.addEventListener('input', (e) => {
         document.documentElement.style.setProperty('--hanzi-color', e.target.value);
       });
+
       async function processText() {
         const rawText = textarea.value;
+        // If read aloud is active, stop it before updating content
+        if (speechSynthesis.speaking) {
+             speechSynthesis.cancel();
+             pauseResumeBtn.disabled = true;
+             pauseResumeBtn.textContent = 'Pause';
+             isPaused = false; // Reset pause state
+             utterance = null; // Clear utterance object
+        }
         try {
           const pinyinData = await getPinyinData(rawText);
           const tempDiv = document.createElement('div');
           tempDiv.textContent = rawText;
           processTextNodes(tempDiv, pinyinData);
-          outputSection.innerHTML = '';
-          outputSection.appendChild(tempDiv);
+          outputSection.innerHTML = ''; // Clear previous content
+          outputSection.appendChild(tempDiv); // Append new content
         } catch (error) {
           console.error('Error processing text:', error);
+          outputSection.textContent = 'Error processing text.'; // Provide user feedback
         }
       }
+
       async function getPinyinData(text) {
         const options = {
           type: 'array',
@@ -423,116 +527,178 @@
           mode: 'normal'
         };
         try {
+          // Use pinyinPro directly
           const result = pinyinPro.pinyin(text, options);
-          return result.map((pinyin, index) => ({
-            hanzi: text[index],
-            pinyin: pinyin
+          // Map result carefully, ensuring index matches original text length
+          return text.split('').map((char, index) => ({
+              hanzi: char,
+              // Handle potential mismatch if pinyin result length differs (unlikely with these options but safer)
+              pinyin: result[index] !== undefined ? result[index] : ''
           }));
         } catch (error) {
           console.error('Error fetching Pinyin data:', error);
-          return [];
+          return []; // Return empty array on error
         }
       }
+
       function processTextNodes(node, pinyinData) {
-        const walker = document.createTreeWalker(
-          node,
-          NodeFilter.SHOW_TEXT,
-          null,
-          false
-        );
+        // Create a fragment to build the new content off-DOM
+        const fragment = document.createDocumentFragment();
+        const text = node.textContent || ''; // Get the full text content
         let pinyinIndex = 0;
-        let textNode;
-        while ((textNode = walker.nextNode())) {
-          const chars = textNode.nodeValue.split('');
-          const parent = textNode.parentNode;
-          const fragment = document.createDocumentFragment();
-          chars.forEach((char) => {
+
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+
             if (char === '\n') {
-              const br = document.createElement('br');
-              fragment.appendChild(br);
-              if (pinyinIndex < pinyinData.length) pinyinIndex++;
+                fragment.appendChild(document.createElement('br'));
+                 // Make sure pinyinData index advances even for newline if nonZh='spaced' wasn't perfect
+                 if (pinyinIndex < pinyinData.length && pinyinData[pinyinIndex].hanzi === '\n') {
+                     pinyinIndex++;
+                 }
             } else {
-              const wrapper = document.createElement('span');
-              wrapper.className = 'hanzi-pinyin';
-              if (isHanzi(char) && pinyinIndex < pinyinData.length) {
-                wrapper.innerHTML = `
-                  <span class="pinyin">${pinyinData[pinyinIndex].pinyin}</span>
-                  <span class="hanzi">${char}</span>
-                `;
-                pinyinIndex++;
-              } else {
-                wrapper.innerHTML = `
-                  <span class="pinyin"></span>
-                  <span class="hanzi">${char}</span>
-                `;
-                if (pinyinIndex < pinyinData.length) pinyinIndex++;
-              }
-              fragment.appendChild(wrapper);
+                const wrapper = document.createElement('span');
+                wrapper.className = 'hanzi-pinyin';
+
+                // Find the corresponding pinyin data entry
+                // This loop handles cases where pinyinData might skip non-Hanzi depending on exact library behavior
+                let currentPinyinData = null;
+                while (pinyinIndex < pinyinData.length && pinyinData[pinyinIndex].hanzi !== char) {
+                   // If the pinyinData character isn't the current character,
+                   // it might be for a character that was skipped (like space if nonZh wasn't 'spaced')
+                   // or it's an error. Advance index cautiously.
+                   // Let's assume simple index matching is okay with current settings,
+                   // but keep this logic potentially expandable if issues arise.
+                   if (pinyinData[pinyinIndex].hanzi.trim() === '') { // Skip empty entries if any
+                       pinyinIndex++;
+                   } else {
+                       // Fallback: if Hanzi doesn't match, assume index is correct but pinyin might be missing
+                       break;
+                   }
+                }
+
+                if (pinyinIndex < pinyinData.length && pinyinData[pinyinIndex].hanzi === char) {
+                    currentPinyinData = pinyinData[pinyinIndex];
+                    pinyinIndex++; // Advance only if we found a match
+                }
+
+
+                if (isHanzi(char) && currentPinyinData && currentPinyinData.pinyin) {
+                    wrapper.innerHTML = `
+                      <span class="pinyin">${currentPinyinData.pinyin}</span>
+                      <span class="hanzi">${char}</span>
+                    `;
+                } else {
+                    // Handle non-Hanzi or Hanzi without pinyin
+                    wrapper.innerHTML = `
+                      <span class="pinyin"></span>
+                      <span class="hanzi">${char}</span>
+                    `;
+                     // If it wasn't a match but we should have advanced (e.g. non-hanzi char)
+                    // ensure pinyinIndex catches up if necessary, although the outer loop handles i.
+                }
+                fragment.appendChild(wrapper);
             }
-          });
-          parent.replaceChild(fragment, textNode);
         }
+         // Replace the original text node content with the processed fragment
+         node.innerHTML = ''; // Clear original node content
+         node.appendChild(fragment);
       }
+
+
       function isHanzi(char) {
-        return /[\u4e00-\u9fa5]/.test(char);
+        // More robust check for CJK Unified Ideographs range + extensions
+        return /\p{Script=Han}/u.test(char);
       }
+
       function updateFontSizes() {
-        const baseFontSize = 16;
-        document.documentElement.style.setProperty('--hanzi-size', `${(hanziSize.value / baseFontSize).toFixed(3)}rem`);
-        document.documentElement.style.setProperty('--pinyin-size', `${(pinyinSize.value / baseFontSize).toFixed(3)}rem`);
+        const baseFontSize = 16; // Assuming default browser font size is 16px
+        const hSize = Math.max(10, parseInt(hanziSize.value, 10) || 24); // Ensure valid number, min 10
+        const pSize = Math.max(8, parseInt(pinyinSize.value, 10) || 14); // Ensure valid number, min 8
+        document.documentElement.style.setProperty('--hanzi-size', `${(hSize / baseFontSize).toFixed(3)}rem`);
+        document.documentElement.style.setProperty('--pinyin-size', `${(pSize / baseFontSize).toFixed(3)}rem`);
+        // Update input values in case they were invalid
+        hanziSize.value = hSize;
+        pinyinSize.value = pSize;
       }
-      function debounce(fn, delay) {
-        let timeout;
-        return (...args) => {
-          clearTimeout(timeout);
-          timeout = setTimeout(() => fn.apply(this, args), delay);
-        };
-      }
-      updateFontSizes();
+
       // -------------------------
       // Excel Upload
       // -------------------------
       const uploadExcelButton = document.querySelector('#uploadExcel');
       const excelFileInput = document.querySelector('#excelFileInput');
       const excelDropdown = document.querySelector('#excelDropdown');
+
       uploadExcelButton.addEventListener('click', () => {
-        excelFileInput.click();
+        excelFileInput.click(); // Trigger hidden file input
       });
+
       excelFileInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (!file) return;
+
+        // Basic file type check (client-side)
+        if (!file.name.toLowerCase().endsWith('.xlsx')) {
+            alert('Please upload a valid .xlsx file.');
+            excelFileInput.value = ''; // Reset file input
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = (e) => {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, {type: 'array'});
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-          const filteredData = jsonData.filter(row => row.length >= 2);
-          excelDropdown.innerHTML = '<option value="" disabled selected>Select</option>';
-          filteredData.forEach((row, index) => {
-            const option = document.createElement('option');
-            option.textContent = row[0];
-            option.value = index;
-            option.dataset.text = row[1];
-            excelDropdown.appendChild(option);
-          });
-          if (filteredData.length > 0) {
-            excelDropdown.classList.remove('hidden');
-          } else {
-            excelDropdown.classList.add('hidden');
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            if (!firstSheetName) throw new Error("No sheets found in the Excel file.");
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            // Filter for rows with at least 2 columns (Title and Text)
+            const filteredData = jsonData.filter(row => Array.isArray(row) && row.length >= 2 && row[0] && row[1]); // Ensure title and text exist
+
+            excelDropdown.innerHTML = '<option value="" disabled selected>Select Text</option>'; // Improved placeholder
+
+            filteredData.forEach((row, index) => {
+              const option = document.createElement('option');
+              // Use index as value, store text in dataset
+              option.value = index; // Use index to easily retrieve later
+              option.textContent = String(row[0]).trim(); // Title (Column A)
+              option.dataset.text = String(row[1]); // Text (Column B)
+              excelDropdown.appendChild(option);
+            });
+
+            if (filteredData.length > 0) {
+              excelDropdown.classList.remove('hidden');
+            } else {
+              excelDropdown.classList.add('hidden');
+              alert("No valid data (Title in Col A, Text in Col B) found in the Excel sheet.");
+            }
+          } catch (error) {
+              console.error("Error processing Excel file:", error);
+              alert(`Error reading Excel file: ${error.message}`);
+              excelDropdown.classList.add('hidden');
+          } finally {
+              excelFileInput.value = ''; // Reset file input after processing
           }
+        };
+        reader.onerror = (error) => {
+            console.error("File reading error:", error);
+            alert("Could not read the selected file.");
+            excelFileInput.value = ''; // Reset file input
         };
         reader.readAsArrayBuffer(file);
       });
+
       excelDropdown.addEventListener('change', () => {
         const selectedOption = excelDropdown.options[excelDropdown.selectedIndex];
-        if (!selectedOption.dataset.text) {
-          return; 
+        // Check if a valid option (not the placeholder) is selected and has text data
+        if (selectedOption && selectedOption.value !== "" && selectedOption.dataset.text) {
+          textarea.value = selectedOption.dataset.text;
+          processText(); // Process the newly loaded text
         }
-        textarea.value = selectedOption.dataset.text;
-        processText();
       });
+
       // -------------------------
       // Speech Synthesis
       // -------------------------
@@ -541,236 +707,486 @@
       const pauseResumeBtn = document.getElementById('pauseResumeBtn');
       let utterance = null;
       let isPaused = false;
-      let originalText = '';
-      let resumeOffset = 0; // tracks the index in originalText where speaking paused
-      let isEdge = false;
+      let originalText = ''; // Used for Edge pause/resume workaround
+      let resumeOffset = 0; // Tracks character index for Edge workaround
+      let isEdgeBrowser = false; // Flag for Edge-specific handling
+
       function detectDeviceAndBrowser() {
-        const userAgent = navigator.userAgent.toLowerCase();
-        let device = 'other'; 
-        let browser = 'other';
-        if (/android/i.test(userAgent)) {
-          device = 'android';
-        } else if (/ipad|iphone|ipod/.test(userAgent) && !window.MSStream) {
-          device = 'ios';
-        } else if (/windows nt/i.test(userAgent)) {
-          device = 'windows';
-        } else if (/macintosh/i.test(userAgent) && !/iphone|ipad/.test(userAgent)) {
-          device = 'mac';
-        } 
-        if (userAgent.indexOf('firefox') > -1) {
-          browser = 'firefox';
-        } else if (userAgent.indexOf('opr') > -1 || userAgent.indexOf('opera') > -1) {
-          browser = 'opera';
-        } else if (userAgent.indexOf('trident') > -1) {
-          browser = 'ie';
-        } else if (userAgent.indexOf('edg') > -1) {
-          browser = 'edge';
-        } else if (userAgent.indexOf('chrome') > -1) {
-          browser = 'chrome';
-        } else if (userAgent.indexOf('safari') > -1) {
-          browser = 'safari';
-        }
-        return { device, browser };
+          const ua = navigator.userAgent;
+          let device = 'other';
+          let browser = 'other';
+
+          // Basic Device Detection
+          if (/Android/i.test(ua)) device = 'android';
+          else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) device = 'ios';
+          else if (/Win/i.test(ua)) device = 'windows';
+          else if (/Mac/i.test(ua)) device = 'mac';
+
+          // Basic Browser Detection (check Edge first)
+          if (ua.includes("Edg/")) browser = 'edge'; // Chromium Edge
+          else if (ua.includes("MSIE") || ua.includes("Trident/")) browser = 'ie'; // IE
+          else if (ua.includes("Firefox/")) browser = 'firefox';
+          else if (ua.includes("OPR/") || ua.includes("Opera/")) browser = 'opera';
+          else if (ua.includes("Chrome/")) browser = 'chrome';
+          else if (ua.includes("Safari/")) browser = 'safari'; // Note: Chrome UA also has "Safari"
+
+          // Refine Edge detection
+          isEdgeBrowser = (browser === 'edge');
+
+          return { device, browser };
       }
+
       function populateVoiceList() {
-        const voices = speechSynthesis.getVoices();
-        // Clear the select element.
-        voiceSelect.innerHTML = '';
-        // Filter for Chinese voices.
-        const chineseVoices = voices.filter(v => v.lang.toLowerCase().includes('zh'));
-        // If there are none, add a placeholder.
-        if (chineseVoices.length === 0) {
-          const option = document.createElement('option');
-          option.value = "";
-          option.textContent = "No Chinese voices available";
-          option.disabled = true;
-          voiceSelect.appendChild(option);
-          return;
-        }
-        // Append an option for each available Chinese voice.
-        chineseVoices.forEach(voice => {
-          const option = document.createElement('option');
-          option.value = voice.name;
-          option.textContent = `${voice.name} (${voice.lang})`;
-          voiceSelect.appendChild(option);
-        });
-        const { device, browser } = detectDeviceAndBrowser();
-        let targetKeyword = '';
-        if (device === 'windows' && browser === 'edge') {
-          targetKeyword = 'yunyang';
-        } else if (device === 'windows' && browser === 'chrome') {
-          targetKeyword = 'huihui';
-        } else if (device === 'ios') {
-          targetKeyword = 'meijia';
-        } else if (device === 'android' && browser === 'firefox') {
-          targetKeyword = 'taiwan';
-        }
-        let found = false;
-        if (targetKeyword) {
-          for (let i = 0; i < voiceSelect.options.length; i++) {
-            const voiceName = voiceSelect.options[i].value.toLowerCase();
-            if (voiceName.includes(targetKeyword)) {
-              voiceSelect.selectedIndex = i;
-              found = true;
-              break;
+        try {
+            const voices = speechSynthesis.getVoices();
+            voiceSelect.innerHTML = ''; // Clear existing options
+
+            const chineseVoices = voices.filter(v => v.lang.toLowerCase().startsWith('zh'));
+
+            if (chineseVoices.length === 0) {
+              const option = document.createElement('option');
+              option.value = "";
+              option.textContent = "No Chinese voices";
+              option.disabled = true;
+              voiceSelect.appendChild(option);
+              readAloudBtn.disabled = true; // Disable button if no voices
+              return;
             }
-          }
-        }
-        if (!found) {
-          // For non-Edge browsers, if no matching target is found, select the first available voice.
-          voiceSelect.selectedIndex = 0;
+
+             // Add a default placeholder option
+             const placeholderOption = document.createElement('option');
+             placeholderOption.value = "";
+             placeholderOption.textContent = "Select Voice";
+             placeholderOption.disabled = true;
+             placeholderOption.selected = true; // Make it selected by default
+             voiceSelect.appendChild(placeholderOption);
+
+
+            chineseVoices.forEach(voice => {
+              const option = document.createElement('option');
+              option.value = voice.name;
+              option.textContent = `${voice.name} (${voice.lang})`;
+              option.dataset.lang = voice.lang; // Store lang for potential use
+              voiceSelect.appendChild(option);
+            });
+
+            readAloudBtn.disabled = false; // Enable button if voices found
+
+            // --- Auto-select preferred voice ---
+            const { device, browser } = detectDeviceAndBrowser();
+            let targetKeyword = '';
+            // Define preferred keywords based on platform/browser
+            if (device === 'windows' && browser === 'edge') targetKeyword = 'yunyang'; // Microsoft Yunyang Online
+            else if (device === 'windows' && browser === 'chrome') targetKeyword = 'huihui'; // Google 普通话（中国大陆） often includes Huihui
+            else if (device === 'mac' && browser === 'safari') targetKeyword = 'ting-ting'; // macOS Ting-Ting (Enhanced)
+             else if (device === 'mac' && browser === 'chrome') targetKeyword = 'huihui'; // Google voice might be available on Mac Chrome
+            else if (device === 'ios') targetKeyword = 'meijia'; // iOS Mei-Jia is common
+
+            let preferredVoiceFound = false;
+            if (targetKeyword) {
+              for (let i = 0; i < voiceSelect.options.length; i++) {
+                if (voiceSelect.options[i].value.toLowerCase().includes(targetKeyword)) {
+                  voiceSelect.selectedIndex = i;
+                  preferredVoiceFound = true;
+                  break;
+                }
+              }
+            }
+
+            // Fallback: If no preferred voice or placeholder still selected, try selecting the first Mandarin voice
+            if (!preferredVoiceFound && voiceSelect.selectedIndex <= 0) {
+                 for (let i = 1; i < voiceSelect.options.length; i++) { // Start from 1 to skip placeholder
+                     const lang = voiceSelect.options[i].dataset.lang.toLowerCase();
+                     if (lang === 'zh-cn') { // Prioritize Mainland Mandarin
+                         voiceSelect.selectedIndex = i;
+                         preferredVoiceFound = true;
+                         break;
+                     }
+                 }
+            }
+             // If still no specific Mandarin found, select the first available Chinese voice (after placeholder)
+             if (!preferredVoiceFound && voiceSelect.options.length > 1 && voiceSelect.selectedIndex <= 0) {
+                 voiceSelect.selectedIndex = 1;
+             }
+
+
+        } catch (error) {
+            console.error("Error populating voice list:", error);
+            // Provide fallback UI state
+            voiceSelect.innerHTML = '<option value="" disabled selected>Error loading voices</option>';
+            readAloudBtn.disabled = true;
         }
       }
-      populateVoiceList();
-      speechSynthesis.onvoiceschanged = populateVoiceList;
-      // Determine if we’re running in Edge on Windows.
-      const { device, browser } = detectDeviceAndBrowser();
-      if (device === 'windows' && browser === 'edge') {
-        isEdge = true;
+
+      // Populate voices when they are ready
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
       }
+      populateVoiceList(); // Call initially in case voices are already loaded
+
+
       function readAloud() {
         const text = textarea.value.trim();
         if (!text) {
-          alert('Please enter some text first.');
+          alert('Please enter some text in the editor first.');
           return;
         }
-        if (speechSynthesis.speaking) {
+        const selectedVoiceName = voiceSelect.value;
+        if (!selectedVoiceName) {
+          alert('Please select a Chinese voice from the dropdown.');
+          return;
+        }
+
+        // Cancel any ongoing speech
+        if (speechSynthesis.speaking || speechSynthesis.pending) {
           speechSynthesis.cancel();
         }
+
+        // Find the selected voice object
+        const voiceObj = speechSynthesis.getVoices().find(v => v.name === selectedVoiceName);
+        if (!voiceObj) {
+            alert('Selected voice not found. Please try selecting again.');
+            populateVoiceList(); // Repopulate list in case it changed
+            return;
+        }
+
+
         utterance = new SpeechSynthesisUtterance(text);
-        const selectedVoice = voiceSelect.value;
-        if (!selectedVoice) {
-          alert('Please select a Chinese voice first.');
-          return;
-        }
-        const voiceObj = speechSynthesis.getVoices().find(v => v.name === selectedVoice);
-        if (voiceObj) {
-          utterance.voice = voiceObj;
-        }
-        utterance.rate = 0.8;
-        utterance.pitch = 0.9;
-        pauseResumeBtn.disabled = false;
+        utterance.voice = voiceObj;
+        utterance.lang = voiceObj.lang; // Set language explicitly
+        utterance.rate = 0.8; // Slightly slower for clarity
+        utterance.pitch = 1.0; // Normal pitch
+
+        // Reset pause state
+        isPaused = false;
         pauseResumeBtn.textContent = 'Pause';
-        utterance.onend = () => {
-          pauseResumeBtn.disabled = true;
-          pauseResumeBtn.textContent = 'Pause';
+        pauseResumeBtn.disabled = false;
+
+        // --- Event Handlers for Utterance ---
+        utterance.onstart = () => {
+            console.log('Speech started');
+            isPaused = false; // Ensure state is correct
+            pauseResumeBtn.textContent = 'Pause';
+            pauseResumeBtn.disabled = false;
         };
-        if (isEdge) {
-          // For Edge: save the full text and start from index 0.
-          originalText = text;
-          resumeOffset = 0;
-          // Update resumeOffset as words are spoken.
-          utterance.onboundary = (event) => {
-            if (event.name === 'word') {
-              resumeOffset = event.charIndex;
-            }
-          };
-        }
-        speechSynthesis.speak(utterance);
-      }
-      readAloudBtn.addEventListener('click', readAloud);
-      pauseResumeBtn.addEventListener('click', () => {
-        if (isEdge) {
-          if (!isPaused) {
-            // Simulate pause for Edge: cancel current utterance.
-            speechSynthesis.cancel();
-            isPaused = true;
+
+        utterance.onpause = () => {
+            console.log('Speech paused');
+            isPaused = true; // Mark as paused
             pauseResumeBtn.textContent = 'Resume';
-          } else {
-            // Resume: create a new utterance from the last recorded offset.
-            const remainingText = originalText.substring(resumeOffset);
-            if (remainingText.trim().length > 0) {
-              const resumedUtterance = new SpeechSynthesisUtterance(remainingText);
-              resumedUtterance.voice = speechSynthesis.getVoices().find(v => v.name === voiceSelect.value);
-              resumedUtterance.rate = 0.8;
-              resumedUtterance.pitch = 0.9;
-              const baseOffset = resumeOffset;
-              resumedUtterance.onboundary = (event) => {
-                if (event.name === 'word') {
-                  resumeOffset = baseOffset + event.charIndex;
-                }
-              };
-              resumedUtterance.onend = () => {
-                pauseResumeBtn.disabled = true;
-                pauseResumeBtn.textContent = 'Pause';
-                isPaused = false;
-              };
-              speechSynthesis.speak(resumedUtterance);
-            }
+        };
+
+        utterance.onresume = () => {
+            console.log('Speech resumed');
+            isPaused = false; // Mark as not paused
+            pauseResumeBtn.textContent = 'Pause';
+        };
+
+        utterance.onend = () => {
+            console.log('Speech ended');
             isPaused = false;
             pauseResumeBtn.textContent = 'Pause';
-          }
-        } else {
-          // Standard pause/resume for other browsers.
-          if (speechSynthesis.speaking && !speechSynthesis.paused) {
-            speechSynthesis.pause();
-            pauseResumeBtn.textContent = 'Resume';
-          } else if (speechSynthesis.paused) {
-            speechSynthesis.resume();
+            pauseResumeBtn.disabled = true;
+            utterance = null; // Clear utterance object
+            resumeOffset = 0; // Reset offset for Edge
+        };
+
+        utterance.onerror = (event) => {
+            console.error('Speech synthesis error:', event.error);
+            alert(`Speech error: ${event.error}`);
+            isPaused = false;
             pauseResumeBtn.textContent = 'Pause';
-          }
+            pauseResumeBtn.disabled = true;
+            utterance = null;
+        };
+
+        // Edge Workaround: Track progress using onboundary
+        if (isEdgeBrowser) {
+            originalText = text; // Store the text
+            resumeOffset = 0;    // Start from the beginning
+            utterance.onboundary = (event) => {
+                // Update offset based on character index if available
+                if (event.name === 'word' || event.name === 'sentence') {
+                   // charIndex seems reliable in Edge for tracking position
+                   if (typeof event.charIndex === 'number') {
+                       resumeOffset = event.charIndex + event.charLength; // Position *after* the boundary event
+                   }
+                }
+            };
+        }
+
+        // Start speaking
+        speechSynthesis.speak(utterance);
+      }
+
+      readAloudBtn.addEventListener('click', readAloud);
+
+      pauseResumeBtn.addEventListener('click', () => {
+        if (!utterance && !isPaused) return; // Nothing to pause/resume
+
+        if (isEdgeBrowser) {
+             // Edge workaround: Cancel and respeak from offset
+             if (!isPaused) { // If speaking, pause it (cancel)
+                 speechSynthesis.cancel(); // This triggers 'onend' normally
+                 isPaused = true;
+                 pauseResumeBtn.textContent = 'Resume';
+                 // Note: resumeOffset is updated by onboundary
+             } else { // If paused, resume (respeak)
+                 const remainingText = originalText.substring(resumeOffset);
+                 if (remainingText.trim().length > 0) {
+                     // Re-create utterance for the remaining part
+                     isPaused = false; // We are attempting to speak again
+                     readAloudBtn.click(); // Simplest way to restart with correct settings/handlers
+                     // Adjust text to be spoken (this requires modifying readAloud slightly or handling here)
+                     // Let's modify readAloud call - this is tricky, maybe direct speak is better
+                      utterance = new SpeechSynthesisUtterance(remainingText);
+                      const voiceObj = speechSynthesis.getVoices().find(v => v.name === voiceSelect.value);
+                      if (voiceObj) utterance.voice = voiceObj;
+                      utterance.lang = voiceObj ? voiceObj.lang : 'zh-CN';
+                      utterance.rate = 0.8;
+                      utterance.pitch = 1.0;
+                      const baseOffset = resumeOffset; // Capture offset at time of resuming
+
+                      // Re-attach handlers for the new utterance
+                      utterance.onstart = () => { console.log('Speech resumed (Edge)'); isPaused = false; pauseResumeBtn.textContent = 'Pause'; pauseResumeBtn.disabled = false;};
+                      utterance.onend = () => { console.log('Speech ended (Edge)'); isPaused = false; pauseResumeBtn.textContent = 'Pause'; pauseResumeBtn.disabled = true; utterance = null; resumeOffset = 0; };
+                      utterance.onerror = (event) => { console.error('Speech error (Edge resume):', event.error); alert(`Speech error: ${event.error}`); isPaused = false; pauseResumeBtn.textContent = 'Pause'; pauseResumeBtn.disabled = true; utterance = null; };
+                      utterance.onboundary = (event) => { if (event.name === 'word' || event.name === 'sentence') { if(typeof event.charIndex === 'number') { resumeOffset = baseOffset + event.charIndex + event.charLength; } }};
+
+                      speechSynthesis.speak(utterance);
+
+                 } else {
+                     // No text left to speak
+                     isPaused = false;
+                     pauseResumeBtn.textContent = 'Pause';
+                     pauseResumeBtn.disabled = true;
+                 }
+             }
+        } else {
+            // Standard browser pause/resume
+            if (speechSynthesis.speaking && !isPaused) {
+                speechSynthesis.pause(); // Triggers 'onpause'
+            } else if (speechSynthesis.paused && isPaused) {
+                speechSynthesis.resume(); // Triggers 'onresume'
+            }
         }
       });
+
+
+      // -------------------------
+      // Resizable Splitter Logic
+      // -------------------------
+      let splitInstance = null;
+      const breakpoint = 1200; // Width threshold for desktop/mobile layout
+
+      function initializeSplitView() {
+          // Check if already initialized or if screen is too small
+          if (splitInstance || window.innerWidth <= breakpoint) {
+              // If screen is too small, ensure container doesn't have 'split' class
+              if (window.innerWidth <= breakpoint) {
+                   container.classList.remove('split');
+                   // Ensure sections have correct styles for mobile
+                   inputSection.style.cssText = '';
+                   outputSection.style.cssText = '';
+              }
+              return;
+          }
+
+          // Ensure container has the 'split' class before initializing
+          container.classList.add('split');
+
+          console.log('Initializing Split.js');
+          splitInstance = Split(['.input-section', '.output-section'], {
+              sizes: inputSection.classList.contains('fullscreen-hidden') ? [0, 100] : [50, 50], // Start collapsed if needed
+              minSize: 150,          // Minimum size in pixels for each pane
+              gutterSize: 10,        // Width of the draggable gutter
+              direction: 'horizontal',
+              cursor: 'col-resize',
+              // Use flex-basis for sizing
+              elementStyle: (dimension, size, gutterSize) => ({
+                  'flex-basis': `calc(${size}% - ${gutterSize / 2}px)`,
+              }),
+              gutterStyle: (dimension, gutterSize) => ({
+                  'flex-basis': `${gutterSize}px`,
+              }),
+              onDragEnd: function(sizes) {
+                   // Optional: Save sizes to localStorage?
+                   // localStorage.setItem('splitSizes', JSON.stringify(sizes));
+              }
+          });
+
+           // Re-apply hidden state immediately if needed after init
+           if (inputSection.classList.contains('fullscreen-hidden')) {
+               splitInstance.setSizes([0, 100], {dragging: false});
+           }
+      }
+
+      function destroySplitView() {
+          if (splitInstance) {
+              console.log('Destroying Split.js');
+              splitInstance.destroy(true); // Pass true to clean inline styles
+              splitInstance = null;
+              container.classList.remove('split'); // Remove class marker
+              // Explicitly reset styles potentially left by destroy(true) or needed for mobile
+              inputSection.style.cssText = '';
+              outputSection.style.cssText = '';
+          }
+      }
+
+      // --- Update Toggle Input Button Handler ---
+      toggleInput.addEventListener('click', () => {
+          const isHidden = inputSection.classList.toggle('fullscreen-hidden');
+          outputSection.classList.toggle('fullscreen'); // This class might be less relevant now
+
+          toggleInput.textContent = isHidden ? 'Show Editor' : 'Hide Editor';
+
+          // If Split.js is active (desktop view), adjust its sizes
+          if (splitInstance) {
+              if (isHidden) {
+                  splitInstance.setSizes([0, 100]);
+              } else {
+                  // Restore to default 50/50 or potentially saved sizes
+                  // const savedSizes = localStorage.getItem('splitSizes');
+                  // const sizes = savedSizes ? JSON.parse(savedSizes) : [50, 50];
+                   splitInstance.setSizes([50, 50]);
+              }
+          } else {
+              // On mobile, the CSS handles the hiding/showing directly
+              // No Split.js interaction needed here
+          }
+      });
+
+
+      // --- Debounced Resize Handler ---
+      function handleResize() {
+          if (window.innerWidth > breakpoint) {
+              initializeSplitView(); // Creates split if needed
+              // If split exists, ensure sizes match hidden state
+              if (splitInstance) {
+                  const currentSizes = splitInstance.getSizes();
+                  if (inputSection.classList.contains('fullscreen-hidden') && currentSizes[0] > 0) {
+                      splitInstance.setSizes([0, 100], {dragging: false});
+                  } else if (!inputSection.classList.contains('fullscreen-hidden') && currentSizes[0] < 10) { // If not hidden but looks collapsed
+                      splitInstance.setSizes([50, 50], {dragging: false}); // Restore default split
+                  }
+              }
+          } else {
+              destroySplitView(); // Removes split if it exists
+          }
+      }
+      const debouncedResizeHandler = debounce(handleResize, 250);
+      window.addEventListener('resize', debouncedResizeHandler);
+
       // -------------------------
       // Auto-Show/Hide of Button Container
       // -------------------------
       const buttonContainer = document.querySelector('.button-container');
-      buttonContainer.classList.add('hidden');
-      const SHOW_ZONE = 180;
-      document.addEventListener('mousemove', (e) => {
-        if (window.innerHeight - e.clientY < SHOW_ZONE) {
-          buttonContainer.classList.remove('hidden');
-        } else {
-          buttonContainer.classList.add('hidden');
-        }
-      });
-      document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 0) {
-          const touchY = e.touches[0].clientY;
-          if (window.innerHeight - touchY < SHOW_ZONE) {
-            buttonContainer.classList.remove('hidden');
+      buttonContainer.classList.add('hidden'); // Start hidden
+      const SHOW_ZONE = 180; // Pixels from bottom edge
+
+      function checkPointerPosition(y) {
+          if (window.innerHeight - y < SHOW_ZONE) {
+              buttonContainer.classList.remove('hidden');
           } else {
-            buttonContainer.classList.add('hidden');
+              buttonContainer.classList.add('hidden');
           }
-        }
-      });
-      // ------------------------------------------------------------------
-      //  >>> Hide Read-Aloud UI on mobile <<<
-      // ------------------------------------------------------------------
-      {
-        const { device } = detectDeviceAndBrowser();
-        // If the device is not a PC (i.e. not Windows or Mac), hide the read-aloud UI.
-        if (device !== 'windows' && device !== 'mac') {
-          readAloudBtn.style.display = 'none';
-          voiceSelect.style.display = 'none';
-          pauseResumeBtn.style.display = 'none';
-          alert('Note: The read-aloud feature is available only on PCs due to limitations in mobile phone browsers.');
-        }
       }
+
+      document.addEventListener('mousemove', (e) => checkPointerPosition(e.clientY));
+      document.addEventListener('touchstart', (e) => {
+          if (e.touches.length > 0) {
+              checkPointerPosition(e.touches[0].clientY);
+          }
+      });
+       // Add a leave listener to hide controls when mouse leaves window near bottom
+       document.body.addEventListener('mouseleave', (e) => {
+           // Check if mouse left towards the bottom or sides near bottom
+           if (e.clientY >= (window.innerHeight - 5)) { // 5px tolerance
+             // Don't hide immediately if mouse just left bottom
+           } else if (!buttonContainer.matches(':hover') && !Array.from(buttonContainer.querySelectorAll('*')).some(el => el.matches(':hover'))) {
+               // Hide if mouse leaves body and isn't hovering over the button container itself
+               buttonContainer.classList.add('hidden');
+           }
+       });
+       // Keep visible if mouse enters the container
+       buttonContainer.addEventListener('mouseenter', () => {
+            buttonContainer.classList.remove('hidden');
+       });
+
+
+      // ------------------------------------------------------------------
+      //  >>> Hide Read-Aloud UI on mobile <<< (Run Early)
+      // ------------------------------------------------------------------
+      (function() { // IIFE to avoid polluting global scope
+         const { device } = detectDeviceAndBrowser();
+         // Hide if not Windows or Mac
+         if (device !== 'windows' && device !== 'mac') {
+           if (readAloudBtn) readAloudBtn.style.display = 'none';
+           if (voiceSelect) voiceSelect.style.display = 'none';
+           if (pauseResumeBtn) pauseResumeBtn.style.display = 'none';
+           // Optionally show a message only once
+           if (!sessionStorage.getItem('readAloudMobileWarningShown')) {
+                // alert('Note: The read-aloud feature is primarily designed for PC browsers.');
+                // sessionStorage.setItem('readAloudMobileWarningShown', 'true');
+           }
+         }
+      })();
+
+
       // -------------------------
-      // Visitor Counter and Admin Popup
+      // Initialization on Load
       // -------------------------
       document.addEventListener('DOMContentLoaded', () => {
+        // --- Initial UI Setup ---
+        updateFontSizes(); // Set initial font sizes from input values
+        handleResize();    // Initialize or destroy split view based on initial width
+
+        // --- Visitor Counter ---
         const pv = document.getElementById('pageviews');
-        if (pv !== null) {
-          const uri = location.pathname.replace(/\/$/, '');
+        if (pv) {
+          const uri = location.pathname.replace(/\/$/, '') || '/'; // Handle root path
           const url = `https://linsnotes.goatcounter.com/counter/${encodeURIComponent(uri)}.json`;
           fetch(url)
-            .then((response) => response.json())
-            .then((data) => {
-              const count = data.count.replace(/\s/g, '');
-              pv.innerText = new Intl.NumberFormat().format(count);
+            .then(response => {
+                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                 return response.json();
             })
-            .catch((error) => {
-              pv.innerText = '1';
+            .then(data => {
+              const count = data?.count?.replace?.(/\s/g, '') || data?.count || 'N/A'; // Safely access and format
+              pv.innerText = new Intl.NumberFormat().format(count !== 'N/A' ? parseInt(count, 10) : 0);
+            })
+            .catch(error => {
+              console.warn('Failed to fetch visitor count:', error);
+              pv.innerText = '1'; // Fallback
             });
+        } else {
+            console.warn('Pageviews element not found');
         }
+
+        // --- Admin Popup ---
         const adminPopup = document.getElementById('adminPopup');
-        adminPopup.classList.remove('hidden');
-        document.getElementById('adminPopupCloseBtn').addEventListener('click', () => {
-          adminPopup.classList.add('hidden');
-        });
+        const adminPopupCloseBtn = document.getElementById('adminPopupCloseBtn');
+        if (adminPopup && adminPopupCloseBtn) {
+            // Show popup only if it hasn't been closed this session
+            if (!sessionStorage.getItem('adminPopupClosed')) {
+                 adminPopup.classList.remove('hidden');
+            }
+
+            adminPopupCloseBtn.addEventListener('click', () => {
+              adminPopup.classList.add('hidden');
+              // Remember that the popup was closed for this session
+              sessionStorage.setItem('adminPopupClosed', 'true');
+            });
+        } else {
+            console.warn('Admin popup elements not found');
+        }
+
+        // Initial text processing if textarea has content on load (e.g., from back button)
+        if (textarea.value) {
+             processText();
+        }
       });
+
     </script>
   </body>
 </html>
