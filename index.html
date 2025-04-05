@@ -969,6 +969,29 @@
              }
         }
 
+        // --- Logic to Reset Built-in Selects on Custom Input Focus ---
+        customSheetIdInput.addEventListener('focus', () => {
+            console.log('Custom Sheet ID input focused. Resetting built-in selects.'); // Optional: for debugging
+
+            // Reset the first dropdown (Topic/Sheet) to its initial placeholder
+            if (builtInContentSelect.options.length > 0) {
+                 builtInContentSelect.selectedIndex = 0; // Assumes index 0 is the placeholder
+            }
+            // Or use this if your placeholder value is specifically "":
+            // builtInContentSelect.value = "";
+
+            // Hide the second dropdown group
+            builtInTextSelectGroup.classList.add('hidden');
+
+            // Clear and reset the second dropdown (Text)
+            builtInTextSelect.innerHTML = '<option value="" disabled selected>-- Select Topic First --</option>';
+            builtInTextSelect.disabled = true; // Ensure it's disabled
+
+            // Clear any potentially loaded data from a previous built-in selection
+            currentSheetContentData = [];
+        });
+  
+        
         // Event Listener for First Dropdown (Select Topic/Sheet)
         builtInContentSelect.addEventListener('change', async (event) => {
             const selectedSheetId = event.target.value;
