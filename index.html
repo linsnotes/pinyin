@@ -478,7 +478,7 @@
         <!-- START: Updated Google Sheet Import Section -->
         <div class="import-controls">
             <div class="control-group">
-                <label for="builtInContentSelect">Select Topic/Sheet:</label>
+                <label for="builtInContentSelect">Select Built-in Sheet:</label>
                 <select id="builtInContentSelect">
                     <option value="" disabled selected>-- Loading List --</option>
                 </select>
@@ -489,7 +489,7 @@
                  <input type="text" id="customSheetIdInput" placeholder="Enter Google Sheet ID here">
                  <button id="importCustomSheetBtn" type="button">Import</button>
             </div>
-            <p>Sheet format: Col A = Titles, Col B = Text content (newlines preserved).</p>
+            <p>Sheet format: Row 1 as Header, Col A = Titles, Col B = Text content (newlines preserved).</p>
           
             <div class="control-group hidden" id="builtInTextSelectGroup"> <!-- Hide this group initially -->
                 <label for="builtInTextSelect">Select Text:</label>
