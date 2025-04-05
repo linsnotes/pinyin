@@ -884,49 +884,30 @@
       }
 
       // Adjust layout slightly if fullscreen mode is toggled
-
+      // (Consider how the resizer should behave in fullscreen)
       toggleInput.addEventListener('click', () => {
-        // Toggle the hidden class on the input section
-        const isInputHidden = inputSection.classList.toggle('fullscreen-hidden');
-        // Toggle the fullscreen class on the output section (for potential style changes like padding)
-        outputSection.classList.toggle('fullscreen');
+          inputSection.classList.toggle('fullscreen-hidden');
+          outputSection.classList.toggle('fullscreen');
+          toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
+            ? 'Show Editor'
+            : 'Hide Editor';
 
-        // Update the button text
-        toggleInput.textContent = isInputHidden ? 'Show Editor' : 'Hide Editor';
-
-        // Check if the resizer element actually exists (it might be hidden by CSS media queries)
-        if (resizer) {
-            if (isInputHidden) {
-                // --- HIDING EDITOR ---
-                // Hide the resizer
-                resizer.style.display = 'none';
-                // Make the output section take up all the available space
-                outputSection.style.flexBasis = '100%';
-                // Optional: ensure flex grow/shrink don't interfere, though basis=100% should be enough
-                // outputSection.style.flexGrow = '1';
-                // outputSection.style.flexShrink = '0';
-            } else {
-                // --- SHOWING EDITOR ---
-                // Show the resizer (use 'flex' or 'block' depending on desired default display - 'flex' works here)
-                resizer.style.display = 'flex';
-                // Remove inline flex-basis styles so the resizer logic or default CSS can control widths again
-                inputSection.style.flexBasis = '';
-                outputSection.style.flexBasis = '';
-                // Optional: Reset grow/shrink if they were changed
-                // outputSection.style.flexGrow = '';
-                // outputSection.style.flexShrink = '';
-            }
-        } else {
-            // --- Handle case where resizer doesn't exist (e.g., mobile view) ---
-            // You might not need specific logic here if the CSS media query
-            // already handles the layout correctly when inputSection is hidden.
-            // But if you need to ensure output takes full width:
-            if (isInputHidden) {
-                 outputSection.style.flexBasis = '100%';
-            } else {
-                 outputSection.style.flexBasis = '';
-            }
-        }
+          // Hide resizer when input is hidden (fullscreen output)
+          if (resizer) {
+             resizer.style.display = inputSection.classList.contains('fullscreen-hidden') ? 'none' : 'flex'; // or 'block'
+          }
+          // Optionally reset widths when exiting fullscreen
+          if (!inputSection.classList.contains('fullscreen-hidden') && resizer) {
+              // Reset to something reasonable like 50/50 if needed
+              // leftSide.style.flexBasis = '50%';
+              // rightSide.style.flexBasis = '50%';
+              // Or remove inline styles to revert to CSS defaults
+              leftSide.style.flexBasis = '';
+              rightSide.style.flexBasis = '';
+          } else if(outputSection.classList.contains('fullscreen')){
+             // Ensure output takes full width in its fullscreen mode
+             outputSection.style.flexBasis = '100%';
+          }
       });
 
       
