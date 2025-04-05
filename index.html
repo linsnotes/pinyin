@@ -261,6 +261,13 @@
         margin: 0.5rem 0;
       }
       @media (max-width: 1200px) {
+
+        textarea {
+          min-height: 150px; /* Ensure a minimum usable height */
+          height: 25vh; /* Start with a viewport-relative height, but allow resize */
+          /* Or use a fixed pixel height like: height: 200px; */
+        }
+
         /* Stack container sections vertically */
         .container {
           flex-direction: column;
@@ -285,10 +292,8 @@
            /* Adjust padding for the input section */
            padding: 0.8rem;
            padding-bottom: 2rem;
-           height: 40vh; /* Example height */
          }
          .output-section {
-            height: 50vh; /* Example height */
          }
         /* Hide the first 4 labels and print button */
         .button-container label:nth-of-type(-n+4),
