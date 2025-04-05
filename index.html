@@ -197,14 +197,27 @@
         flex-direction: column;
         cursor: default;
       }
-      .button-container input {
+      .button-container input[type="number"] { /* Target number inputs specifically */
         width: 2.3rem;
         border-radius: 0.2rem;
+        color: #000; /* Ensure number input text is visible */
+      }
+      .button-container input[type="color"] { /* Target color inputs specifically */
+         width: 2.3rem; /* Match width */
+         height: 1.5rem; /* Adjust height to fit label better */
+         padding: 0; /* Remove padding */
+         border: none; /* Remove border */
+         border-radius: 0.2rem; /* Match border-radius */
+         cursor: pointer; /* Pointer cursor */
+         background-color: transparent; /* Allow swatch to show */
+         vertical-align: middle; /* Align better within label */
       }
       .button-container select {
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
+        color: #fff; /* Ensure select text is visible */
+        background-color: #007aff; /* Match button background */
       }
       #excelDropdown,
       #voiceSelect {
@@ -322,7 +335,7 @@
           color: #666;
           margin-top: 0.5rem;
       }
-       #builtInTextSelect.hidden { /* Use specific selector for hiding */
+       #builtInTextSelectGroup.hidden { /* Use specific selector for hiding */
           display: none;
       }
       /* --- END: Styles for Google Sheet Import Controls --- */
@@ -692,7 +705,7 @@
                              `;
                          } else {
                               // Handle potential mismatch or missing data
-                              console.warn(`Mismatch or missing data at index ${pinyinIndex}: Text='${char}', PinyinData Hanzi='${data ? data.hanzi : 'N/A'}'`);
+                              // console.warn(`Mismatch or missing data at index ${pinyinIndex}: Text='${char}', PinyinData Hanzi='${data ? data.hanzi : 'N/A'}'`);
                               wrapper.innerHTML = `
                                 <span class="pinyin"></span>
                                 <span class="hanzi">${char}</span>
@@ -793,6 +806,7 @@
 
         // -----------------------------------------------
         // NEW/REVISED: Google Sheet Import Logic
+        // (No functional change needed for request #2, logic was already present)
         // -----------------------------------------------
         const BUILT_IN_LIST_SHEET_ID = '156lq4Vwm-WmAZ3tIeYu9p5DliqVt3kXqiplkaeyq_ZM'; // *** REPLACE with your actual list sheet ID ***
         let currentSheetContentData = []; // Holds {title, text} array for the loaded sheet
@@ -804,12 +818,14 @@
          * @returns {Promise<Array<{title: string, text: string}>|null>} Array of objects or null on error.
          */
         async function fetchAndParseContentSheet(sheetId) {
-            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0&tqx=out:csv×tamp=${new Date().getTime()}`; // Add timestamp to try bypassing cache
+            // Construct URL with timestamp to attempt cache busting
+            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0&tqx=out:csv×tamp=${new Date().getTime()}`;
             console.log(`Fetching content sheet: ${sheetId}`); // Log fetching attempt
             currentSheetContentData = []; // Clear previous data
 
             try {
-                const response = await fetch(url, { cache: "no-store" }); // Explicitly disable cache
+                // Explicitly disable cache via Request object options
+                const response = await fetch(url, { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error(`HTTP error fetching sheet! Status: ${response.status}`);
                 }
@@ -820,10 +836,12 @@
                      return [];
                 }
 
+                // Parse CSV using SheetJS
                 const workbook = XLSX.read(csv, { type: 'string', raw: true });
                 const firstSheetName = workbook.SheetNames[0];
                 if (!firstSheetName) throw new Error('No sheet found in the fetched data.');
 
+                // Convert sheet to JSON array (array of arrays)
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheetName], { header: 1, defval: "" });
 
                 if (jsonData.length <= 1) {
@@ -831,8 +849,8 @@
                     return []; // Return empty array if no data rows after parsing
                 }
 
+                // Process rows into {title, text} objects, skipping header (row 0)
                 const contentData = [];
-                // Start from row 1 (index 1) to skip header
                 for (let i = 1; i < jsonData.length; i++) {
                     const row = jsonData[i];
                     if (row && row.length >= 1) { // Require at least column A
@@ -890,7 +908,8 @@
                  return;
              }
 
-             const listUrl = `https://docs.google.com/spreadsheets/d/${BUILT_IN_LIST_SHEET_ID}/export?format=csv&gid=0&tqx=out:csv×tamp=${new Date().getTime()}`; // Add timestamp
+             // Fetch the list sheet with cache busting
+             const listUrl = `https://docs.google.com/spreadsheets/d/${BUILT_IN_LIST_SHEET_ID}/export?format=csv&gid=0&tqx=out:csv×tamp=${new Date().getTime()}`;
              console.log("Fetching built-in list...");
              try {
                 const response = await fetch(listUrl, { cache: "no-store" }); // Disable cache
@@ -903,6 +922,7 @@
                       return;
                  }
 
+                // Parse the list sheet
                 const workbook = XLSX.read(csv, { type: 'string' });
                 const firstSheetName = workbook.SheetNames[0];
                 if (!firstSheetName) throw new Error('No sheet found in the list workbook.');
@@ -915,6 +935,7 @@
                       return;
                  }
 
+                 // Populate the first dropdown
                 builtInContentSelect.innerHTML = '<option value="" disabled selected>-- Select Topic/Sheet --</option>';
                 let count = 0;
                 for (let i = 1; i < jsonData.length; i++) { // Skip header
@@ -1139,21 +1160,101 @@
              }
         });
 
-        // -------------------------
-        // Auto-Show/Hide of Button Container (Existing - No changes needed here)
-        // -------------------------
+        // -------------------------------------------------------
+        // Auto-Show/Hide of Button Container (UPDATED for focus)
+        // -------------------------------------------------------
         if (buttonContainer) {
             buttonContainer.classList.add('hidden');
-            const SHOW_ZONE = 180;
+            const SHOW_ZONE = 180; // Pixels from bottom edge to trigger show
             let hideTimeout = null;
-            function showButtons() { clearTimeout(hideTimeout); buttonContainer.classList.remove('hidden'); }
-            function hideButtons() { hideTimeout = setTimeout(() => { const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden'); if (!buttonContainer.matches(':hover') && !isAdminPopupVisible) { buttonContainer.classList.add('hidden'); } }, 300); }
-            document.addEventListener('mousemove', (e) => { if (window.innerHeight - e.clientY < SHOW_ZONE) { showButtons(); } else { hideButtons(); } });
+
+            function showButtons() {
+                clearTimeout(hideTimeout); // Cancel any pending hide
+                buttonContainer.classList.remove('hidden');
+            }
+
+            function hideButtons() {
+                // Set timeout to hide the buttons
+                hideTimeout = setTimeout(() => {
+                    const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
+                    // *** UPDATED CHECK ***: Check if focus is currently inside the button container
+                    const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
+
+                    // Only hide if mouse is NOT hovering, admin popup is NOT visible, AND focus is NOT inside the container
+                    if (!buttonContainer.matches(':hover') && !isAdminPopupVisible && !hasFocusWithin) {
+                         buttonContainer.classList.add('hidden');
+                    }
+                    // If any condition is true (hovering, popup visible, focus inside), do nothing, effectively keeping it shown.
+                    // The timeout will be cleared next time showButtons is called (e.g., on mouseenter).
+                }, 300); // 300ms delay before hiding
+            }
+
+            // Show on mouse move near bottom edge
+            document.addEventListener('mousemove', (e) => {
+                if (window.innerHeight - e.clientY < SHOW_ZONE) {
+                    showButtons();
+                } else {
+                    // Don't immediately hide, let mouseleave handle it unless focus is elsewhere
+                     if (!buttonContainer.matches(':hover') && !buttonContainer.contains(document.activeElement)) {
+                         hideButtons();
+                     }
+                }
+            });
+
+            // Keep shown while mouse is over the container
             buttonContainer.addEventListener('mouseenter', showButtons);
+            // Start hide timer when mouse leaves the container
             buttonContainer.addEventListener('mouseleave', hideButtons);
-            document.addEventListener('touchstart', (e) => { if (e.touches.length > 0) { const touchY = e.touches[0].clientY; if (window.innerHeight - touchY < SHOW_ZONE) { showButtons(); clearTimeout(hideTimeout); hideTimeout = setTimeout(() => { hideButtons(); }, 5000); } } });
-            buttonContainer.addEventListener('touchstart', () => { clearTimeout(hideTimeout); });
-        } else { console.error("Button container not found."); }
+
+            // --- Touch handling ---
+            // Show on tap near bottom edge
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 0) {
+                    const touchY = e.touches[0].clientY;
+                    if (window.innerHeight - touchY < SHOW_ZONE) {
+                         showButtons();
+                         // Keep shown for a longer period after touch near bottom
+                         clearTimeout(hideTimeout); // Clear any pending hide
+                         hideTimeout = setTimeout(() => {
+                            // Re-check conditions before hiding after touch timeout
+                            const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
+                            const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
+                            if (!buttonContainer.matches(':hover') && !isAdminPopupVisible && !hasFocusWithin) {
+                                buttonContainer.classList.add('hidden');
+                            }
+                         }, 5000); // Hide after 5 seconds if no further interaction
+                    }
+                }
+            });
+            // Prevent hiding immediately if user taps *inside* the already visible container
+            buttonContainer.addEventListener('touchstart', () => {
+                 clearTimeout(hideTimeout); // Cancel hide timer on tap inside container
+            });
+
+            // Keep shown if an element inside receives focus (e.g., color picker opened)
+            buttonContainer.addEventListener('focusin', () => {
+                // console.log("Focus inside button container, ensuring it's shown."); // Debug log
+                showButtons(); // Make sure it's shown and cancel hide timeout
+            });
+
+            // When focus leaves the container, re-evaluate hiding based on mouse position
+            buttonContainer.addEventListener('focusout', () => {
+                // console.log("Focus left button container, checking if hide needed."); // Debug log
+                 // Add a small delay to allow focus to shift between elements within the container
+                 // without triggering a hide.
+                 setTimeout(() => {
+                    const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
+                    // If focus is *truly* outside now, and mouse is also outside, initiate hide check.
+                     if (!hasFocusWithin && !buttonContainer.matches(':hover')) {
+                         hideButtons();
+                     }
+                 }, 100); // Short delay
+            });
+
+        } else {
+            console.error("Button container not found.");
+        }
+
 
         // ------------------------------------------------------------------
         //  >>> Hide Read-Aloud UI on mobile <<< (Existing - No changes needed here)
@@ -1171,7 +1272,7 @@
             .catch(error => { console.error("Failed to fetch pageviews:", error); pv.innerText = 'N/A'; });
         } else { console.warn("Pageviews element not found."); }
         if (adminPopup && closeBtn && !sessionStorage.getItem('adminPopupClosed')) {
-            adminPopup.classList.remove('hidden'); if(buttonContainer) buttonContainer.classList.add('hidden');
+            adminPopup.classList.remove('hidden'); if(buttonContainer) buttonContainer.classList.add('hidden'); // Also hide buttons initially if popup shows
             closeBtn.addEventListener('click', () => { adminPopup.classList.add('hidden'); sessionStorage.setItem('adminPopupClosed', 'true'); });
         } else if(adminPopup) { adminPopup.classList.add('hidden'); }
 
@@ -1215,5 +1316,3 @@
     </script>
   </body>
 </html>
-
-
