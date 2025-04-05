@@ -39,50 +39,20 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
       }
       .container {
         flex: 1;
         display: flex;
+        gap: 1.25rem;
         padding: 1.25rem;
-        overflow: hidden;
       }
       .input-section,
       .output-section {
+        flex: 1;
         padding: 1.25rem;
         border: 1px solid #ccc;
         border-radius: 0.5rem;
-        overflow: auto; /* Add scroll if content overflows */
-        height: 100%; /* Make sections fill container height */
-        flex-basis: 50%; /* Start at 50% width */
-        flex-grow: 0; /* Don't allow growing beyond basis */
-        flex-shrink: 0; /* Don't allow shrinking beyond basis */
       }
-
-      /* Style for the resizer */
-      #resizer {
-        width: 10px; /* Width of the draggable area */
-        background-color: #ddd;
-        cursor: col-resize; /* Indicate it's draggable horizontally */
-        flex-shrink: 0; /* Prevent the resizer from shrinking */
-        border-left: 1px solid #ccc;
-        border-right: 1px solid #ccc;
-        height: 100%; /* Match container height */
-        /* Center the handle visually if needed, optional */
-        /* display: flex;
-           align-items: center;
-           justify-content: center; */
-      }
-      /* Optional: Style when dragging */
-      body.resizing {
-         cursor: col-resize !important; /* Force cursor during drag */
-         user-select: none; /* Prevent text selection during drag */
-      }
-      body.resizing .input-section,
-      body.resizing .output-section {
-        pointer-events: none; /* Prevent interaction with sections during drag */
-      }
-
       .input-section {
         padding-bottom: 1.5rem; /* Add extra space at the bottom */
       }
@@ -93,7 +63,6 @@
         font-size: 1em;
         text-align: center;
         color: #333;
-        margin-top: 0.5rem; /* Add some space above counter */
       }
       #visitor-counter #pageviews {
         font-weight: bold;
@@ -120,9 +89,8 @@
         border: none;
         font-size: 1.2rem;
         margin-bottom: 0.6rem;
-        resize: none;
+        resize: vertical;
         caret-color: #007aff;
-        display: block;
       }
       textarea:focus {
         outline: none;
@@ -263,11 +231,6 @@
         margin: 0.5rem 0;
       }
       @media (max-width: 1200px) {
-
-        #resizer {
-          display: none;
-        }
-        
         /* Hide the first 4 labels and print button */
         .button-container label:nth-of-type(-n+4),
         .print-btn {
@@ -344,7 +307,6 @@
           Welcome! You’re visitor #<span id="pageviews">Loading...</span>
         </div>
       </div>
-      <div id="resizer"></div>
       <div class="output-section"></div>
     </div>
     <div class="button-container">
@@ -809,108 +771,6 @@
           adminPopup.classList.add('hidden');
         });
       });
-
-      // -------------------------
-      // Resizable Divider Logic
-      // -------------------------
-      const resizer = document.getElementById('resizer');
-      const leftSide = inputSection; // Already defined earlier
-      const rightSide = outputSection; // Already defined earlier
-      const container = document.querySelector('.container');
-
-      let isResizing = false;
-      let startX, startLeftWidth, startRightWidth;
-
-      if (resizer) { // Check if resizer exists (it might be hidden in media query)
-          resizer.addEventListener('mousedown', (e) => {
-              // Prevent text selection
-              e.preventDefault();
-              isResizing = true;
-              startX = e.clientX;
-              startLeftWidth = leftSide.offsetWidth;
-              // startRightWidth = rightSide.offsetWidth; // Alternative way
-
-              document.body.classList.add('resizing'); // Add class for cursor/styling
-
-              // Attach listeners to the document for global tracking
-              document.addEventListener('mousemove', handleMouseMove);
-              document.addEventListener('mouseup', handleMouseUp);
-          });
-      }
-
-      function handleMouseMove(e) {
-          if (!isResizing) return;
-
-          const currentX = e.clientX;
-          const dx = currentX - startX;
-
-          const containerWidth = container.offsetWidth;
-          const resizerWidth = resizer.offsetWidth;
-          const minWidth = 100; // Minimum width for each panel (in pixels)
-
-          let newLeftWidth = startLeftWidth + dx;
-
-          // Constraints
-          if (newLeftWidth < minWidth) {
-              newLeftWidth = minWidth;
-          }
-          // Calculate max width for left panel based on container, resizer, and min right width
-          const maxLeftWidth = containerWidth - resizerWidth - minWidth;
-          if (newLeftWidth > maxLeftWidth) {
-              newLeftWidth = maxLeftWidth;
-          }
-
-          const newRightWidth = containerWidth - newLeftWidth - resizerWidth;
-
-          // Apply new widths using flex-basis (works well with flexbox)
-          leftSide.style.flexBasis = `${newLeftWidth}px`;
-          rightSide.style.flexBasis = `${newRightWidth}px`;
-
-          // Explicitly set flex grow/shrink to 0 to maintain basis
-          leftSide.style.flexGrow = '0';
-          leftSide.style.flexShrink = '0';
-          rightSide.style.flexGrow = '0';
-          rightSide.style.flexShrink = '0';
-      }
-
-      function handleMouseUp() {
-          if (isResizing) {
-              isResizing = false;
-              document.body.classList.remove('resizing'); // Remove resizing class
-              // Remove global listeners
-              document.removeEventListener('mousemove', handleMouseMove);
-              document.removeEventListener('mouseup', handleMouseUp);
-          }
-      }
-
-      // Adjust layout slightly if fullscreen mode is toggled
-      // (Consider how the resizer should behave in fullscreen)
-      toggleInput.addEventListener('click', () => {
-          inputSection.classList.toggle('fullscreen-hidden');
-          outputSection.classList.toggle('fullscreen');
-          toggleInput.textContent = inputSection.classList.contains('fullscreen-hidden')
-            ? 'Show Editor'
-            : 'Hide Editor';
-
-          // Hide resizer when input is hidden (fullscreen output)
-          if (resizer) {
-             resizer.style.display = inputSection.classList.contains('fullscreen-hidden') ? 'none' : 'flex'; // or 'block'
-          }
-          // Optionally reset widths when exiting fullscreen
-          if (!inputSection.classList.contains('fullscreen-hidden') && resizer) {
-              // Reset to something reasonable like 50/50 if needed
-              // leftSide.style.flexBasis = '50%';
-              // rightSide.style.flexBasis = '50%';
-              // Or remove inline styles to revert to CSS defaults
-              leftSide.style.flexBasis = '';
-              rightSide.style.flexBasis = '';
-          } else if(outputSection.classList.contains('fullscreen')){
-             // Ensure output takes full width in its fullscreen mode
-             outputSection.style.flexBasis = '100%';
-          }
-      });
-
-      
     </script>
   </body>
 </html>
