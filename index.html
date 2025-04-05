@@ -293,11 +293,11 @@
 
       
       .import-controls .control-group {
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.85rem;
       }
       .import-controls label {
           display: block;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.3rem;
           font-size: 0.9rem;
           font-weight: 500;
           color: #333;
@@ -305,12 +305,14 @@
       .import-controls select,
       .import-controls input[type="text"] {
           width: 100%;
-          padding: 0.5rem;
-          border-radius: 4px;
+          padding: 0.6rem 0.5rem;
+          border-radius: 5px;
           border: 1px solid #ccc;
           font-size: 0.9rem;
-          background-color: #fff; /* Ensure background for selects */
+          background-color: #f8f8f8; /* Ensure background for selects */
+          color: #222; /* Ensure good contrast for input text */
           box-sizing: border-box; /* Include padding/border in width */
+          transition: border-color 0.2s ease, box-shadow 0.2s ease; /* Smooth transitions */
       }
       .import-controls input[type="text"] {
          width: calc(100% - 85px); /* Adjust width to fit button */
@@ -318,8 +320,8 @@
          vertical-align: middle;
       }
       .import-controls button {
-          padding: 0.5rem 0.8rem;
-          border-radius: 4px;
+          padding: 0.6rem 0.9rem;
+          border-radius: 5px;
           background-color: #007aff;
           color: white;
           border: none;
@@ -327,18 +329,46 @@
           vertical-align: middle;
           font-size: 0.9rem;
           transition: background-color 0.2s ease;
+          height: auto; /* Let padding define height naturally */
+          line-height: normal; /* Reset line-height if needed for vertical centering */
+          display: inline-block; /* Needed for vertical-align */
+          width: 85px; /* Give the button a fixed width for predictability */
+          text-align: center;
       }
+
+      /* Focus style matching the theme's blue */
+      .import-controls select:focus,
+      .import-controls input[type="text"]:focus {
+          outline: none; /* Remove default outline */
+          border-color: #007aff; /* Use theme blue for border */
+          /* Add a subtle glow effect */
+          box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.25);
+      }
+
+      /* Specific styling for the custom sheet ID input to align with button */
+      .import-controls input#customSheetIdInput { /* More specific selector */
+      /* Calculate width to leave space for the button + margin */
+          width: calc(100% - 90px); /* Adjust 90px based on button width + margin */
+          margin-right: 5px; /* Keep gap before button */
+          vertical-align: middle; /* Align input vertically with the button */
+          display: inline-block; /* Needed for vertical-align to work correctly with width calc */
+          background-color: #f8f8f8; /* Ensure consistent background */
+      }      
+
+      
       .import-controls button:hover {
          background-color: #005bb5;
       }
       .import-controls button:disabled {
           background-color: #aaa;
+          color: #666;
           cursor: not-allowed;
       }
       .import-controls p {
           font-size: 0.8rem;
           color: #666;
-          margin-top: 0.5rem;
+          margin-top: 0.6rem;
+          line-height: 1.4; /* Improve readability */
       }
        #builtInTextSelectGroup.hidden { /* Use specific selector for hiding */
           display: none;
