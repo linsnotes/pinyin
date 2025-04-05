@@ -467,7 +467,14 @@
                     <option value="" disabled selected>-- Loading List --</option>
                 </select>
             </div>
-
+          
+            <div class="control-group">
+                 <label for="customSheetIdInput">Or Enter Custom Sheet ID:</label>
+                 <input type="text" id="customSheetIdInput" placeholder="Enter Google Sheet ID here">
+                 <button id="importCustomSheetBtn" type="button">Import</button>
+            </div>
+            <p>Sheet format: Col A = Titles, Col B = Text content (newlines preserved).</p>
+          
             <div class="control-group hidden" id="builtInTextSelectGroup"> <!-- Hide this group initially -->
                 <label for="builtInTextSelect">Select Text:</label>
                 <select id="builtInTextSelect">
@@ -475,12 +482,6 @@
                 </select>
             </div>
 
-            <div class="control-group">
-                 <label for="customSheetIdInput">Or Enter Custom Sheet ID:</label>
-                 <input type="text" id="customSheetIdInput" placeholder="Enter Google Sheet ID here">
-                 <button id="importCustomSheetBtn" type="button">Import</button>
-            </div>
-            <p>Sheet format: Col A = Titles, Col B = Text content (newlines preserved).</p>
         </div>
         <!-- END: Updated Google Sheet Import Section -->
 
