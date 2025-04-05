@@ -343,6 +343,17 @@
        #builtInTextSelectGroup.hidden { /* Use specific selector for hiding */
           display: none;
       }
+
+      #builtInTextSelectGroup {
+          margin-top: 1.5rem; /* << ADJUST GAP ABOVE: Increase this value (e.g., 1rem, 1.5rem, 20px) as needed */
+          background-color: #f0f8ff; /* << CHANGE BACKGROUND COLOR: Set your desired color (e.g., lightblue, #eef, transparent) */
+          padding: 0.5rem;           /* Optional: Adds space inside the colored background */
+          border-radius: 5px;        /* Optional: Rounds the corners of the background */
+          /* Adjust margin-bottom if the added padding makes the gap below too small */
+          margin-bottom: 0.75rem; /* Keep or adjust the default bottom margin */
+       }
+
+      
       /* --- END: Styles for Google Sheet Import Controls --- */
 
       @media (max-width: 1200px) {
