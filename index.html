@@ -120,7 +120,8 @@
       textarea {
         width: 100%;
         flex-grow: 1; /* Allow textarea to take up available space */
-        min-height: 40%; /* Ensure minimum height */
+        flex-shrink: 1;   /* Allow it to shrink if needed (good practice) */
+        flex-basis: 40%;  
         padding: 1rem;
         border: none;
         font-size: 1.2rem;
