@@ -1263,35 +1263,8 @@
                                 buttonContainer.classList.add('hidden');
                             }
                          }, 5000); // Hide after 5 seconds if no further interaction
-              // added from else {
-                    } else {
-                         // <<< ADDED ELSE BRANCH (Mimics 'before' logic for touch outside zone) >>>
-                         // Touch OUTSIDE ZONE: Check if the touch target is NOT the button container or its children
-                         const targetElement = e.target;
-                         if (buttonContainer && !buttonContainer.contains(targetElement)) {
-                              // Touch is OUTSIDE zone AND OUTSIDE container: Hide immediately
-                              // (respecting focus logic - don't hide if focus is inside)
-                               if (!buttonContainer.contains(document.activeElement)) {
-                                   clearTimeout(hideTimeout); // Stop any pending delayed hide
-                                   buttonContainer.classList.add('hidden');
-                               }
-                         }
-                         // If touch is OUTSIDE zone but ON the container, do nothing here.
-                         // The container's own touchstart listener below will handle clearing the timer.
                     }
                 }
-            });
-            // Prevent hiding immediately if user taps *inside* the already visible container (Keep this)
-            buttonContainer.addEventListener('touchstart', () => {
-                 clearTimeout(hideTimeout); // Cancel hide timer on tap inside container
-                 // Optionally reset the timeout here too, like when tapping in the zone
-                  hideTimeout = setTimeout(() => {
-                     const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
-                     const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
-                     if (!isAdminPopupVisible && !hasFocusWithin) {
-                         buttonContainer.classList.add('hidden');
-                     }
-                 }, 5000);
             });
             // Prevent hiding immediately if user taps *inside* the already visible container
             buttonContainer.addEventListener('touchstart', () => {
