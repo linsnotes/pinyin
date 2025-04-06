@@ -376,10 +376,11 @@
           padding: 0.8rem; /* Adjust container padding */
           overflow: visible; /* Allow content to scroll if needed */
         }
-         body {
-             height: auto; /* Allow body height to adjust */
-             overflow: visible;
-         }
+        body {
+          padding-bottom: 4rem;   
+          height: auto; /* Allow body height to adjust */
+          overflow: visible;
+        }
         /* Remove resizer and margins in vertical layout */
         .resizer {
             display: none;
@@ -425,17 +426,21 @@
         }
         /* Style the button container */
         .button-container {
-          position: relative; /* Change from fixed for stacking */
-          bottom: auto;
-          left: auto;
+          position: fixed; /* Ensure it stays fixed */
+          bottom: 0.05rem; /* Or adjust slightly if needed for mobile spacing */
+          left: 0;
+          width: 100%;
+          z-index: 1001; /* Keep it above content */
+
+          /* KEEP these mobile-specific layout styles */
           display: flex;
-          flex-wrap: wrap;
+          flex-wrap: wrap; /* Allows buttons to wrap on small screens */
           justify-content: center;
           align-items: center;
           gap: 0.5rem;
-          padding: 0.5rem; /* Reduce padding */
-          margin-top: 0.5rem; /* Add space above buttons */
-          z-index: auto; /* Reset z-index */
+          padding: 0.5rem; /* Adjust padding as needed */
+          background: rgba(240, 240, 240, 0.9); /* Optional: Add a slight background for visibility */
+          box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Optional: Add a top shadow */
         }
       }
       @media print {
