@@ -1201,12 +1201,17 @@
         });
 
         // -------------------------------------------------------
-        // Auto-Show/Hide of Button Container (UPDATED for focus)
+        // Auto-Show/Hide of Button Container (REVISED for Mobile Stability)
         // -------------------------------------------------------
         if (buttonContainer) {
             buttonContainer.classList.add('hidden');
             const SHOW_ZONE = 180; // Pixels from bottom edge to trigger show
             let hideTimeout = null;
+
+            // --- Device Detection ---
+            // Simple check: assumes presence of 'ontouchstart' indicates a touch-primary device.
+            // You could use more sophisticated libraries if needed, but this often suffices.
+            const isMobileTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
             function showButtons() {
                 clearTimeout(hideTimeout); // Cancel any pending hide
@@ -1215,85 +1220,142 @@
 
             function hideButtons() {
                 // Set timeout to hide the buttons
+                // NOTE: The timeout duration might be set differently for mobile vs pc later if desired
+                // For now, we'll use the mobile's 5000ms if set by mobile, or 300ms if set by PC logic.
+                // The core logic inside the timeout checks conditions valid for both.
                 hideTimeout = setTimeout(() => {
                     const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
-                    // *** UPDATED CHECK ***: Check if focus is currently inside the button container
                     const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
+                    const isHovering = !isMobileTouch && buttonContainer.matches(':hover'); // Hover only relevant on PC
 
-                    // Only hide if mouse is NOT hovering, admin popup is NOT visible, AND focus is NOT inside the container
-                    if (!buttonContainer.matches(':hover') && !isAdminPopupVisible && !hasFocusWithin) {
-                         buttonContainer.classList.add('hidden');
+                    // Only hide if NOT hovering (PC), admin popup is NOT visible, AND focus is NOT inside the container
+                    if (!isHovering && !isAdminPopupVisible && !hasFocusWithin) {
+                        buttonContainer.classList.add('hidden');
                     }
-                    // If any condition is true (hovering, popup visible, focus inside), do nothing, effectively keeping it shown.
-                    // The timeout will be cleared next time showButtons is called (e.g., on mouseenter).
-                }, 300); // 300ms delay before hiding
+                    // If any condition is true, do nothing, keeping it shown.
+                }, 300); // Default PC hide delay - mobile logic will override this timeout value
             }
 
-            // Show on mouse move near bottom edge
-            document.addEventListener('mousemove', (e) => {
-                if (window.innerHeight - e.clientY < SHOW_ZONE) {
-                    showButtons();
-                } else {
-                    // Don't immediately hide, let mouseleave handle it unless focus is elsewhere
-                     if (!buttonContainer.matches(':hover') && !buttonContainer.contains(document.activeElement)) {
-                         hideButtons();
-                     }
-                }
-            });
+            // --- Attach Listeners Conditionally ---
 
-            // Keep shown while mouse is over the container
-            buttonContainer.addEventListener('mouseenter', showButtons);
-            // Start hide timer when mouse leaves the container
-            buttonContainer.addEventListener('mouseleave', hideButtons);
+            if (isMobileTouch) {
+                // --- MOBILE TOUCH LOGIC ---
+                console.log("Attaching Mobile Touch Listeners"); // For debugging
 
-            // --- Touch handling ---
-            // Show on tap near bottom edge
-            document.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 0) {
-                    const touchY = e.touches[0].clientY;
-                    if (window.innerHeight - touchY < SHOW_ZONE) {
-                         showButtons();
-                         // Keep shown for a longer period after touch near bottom
-                         clearTimeout(hideTimeout); // Clear any pending hide
-                         hideTimeout = setTimeout(() => {
-                            // Re-check conditions before hiding after touch timeout
-                            const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
-                            const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
-                            if (!buttonContainer.matches(':hover') && !isAdminPopupVisible && !hasFocusWithin) {
-                                buttonContainer.classList.add('hidden');
-                            }
-                         }, 5000); // Hide after 5 seconds if no further interaction
+                const MOBILE_HIDE_DELAY = 5000; // 5 seconds for mobile
+
+                // Show on tap near bottom edge
+                document.addEventListener('touchstart', (e) => {
+                    if (e.touches.length > 0) {
+                        const touchY = e.touches[0].clientY;
+                        const targetElement = e.target; // Get the element that was tapped
+
+                        if (window.innerHeight - touchY < SHOW_ZONE) {
+                            // Tap is INSIDE the zone
+                            showButtons();
+                            // Keep shown for a period after touch near bottom
+                            clearTimeout(hideTimeout); // Clear any pending hide
+                            hideTimeout = setTimeout(() => {
+                                // Re-check conditions before hiding after touch timeout
+                                const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
+                                const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
+                                if (!isAdminPopupVisible && !hasFocusWithin) {
+                                    buttonContainer.classList.add('hidden');
+                                }
+                            }, MOBILE_HIDE_DELAY); // Use mobile-specific delay
+
+                        } else if (buttonContainer && !buttonContainer.classList.contains('hidden') && !buttonContainer.contains(targetElement)) {
+                            // Tap is OUTSIDE the zone AND the container is VISIBLE AND the tap is NOT on the container itself
+                            // *** REMOVED IMMEDIATE HIDE ***
+                            // Instead, let the existing timeout run its course, or let a tap *on* the container reset it.
+                            // You *could* optionally start a *shorter* hide timer here if desired, e.g.:
+                            // clearTimeout(hideTimeout);
+                            // hideTimeout = setTimeout(hideButtons, 1500); // Hide faster if tapped away
+                            // But for max stability, we'll just let the main timer handle it for now.
+                            console.log("Tap outside zone/container (Mobile) - Immediate hide removed."); // For debugging
+                        }
                     }
-                }
-            });
-            // Prevent hiding immediately if user taps *inside* the already visible container
-            buttonContainer.addEventListener('touchstart', () => {
-                 clearTimeout(hideTimeout); // Cancel hide timer on tap inside container
-            });
+                }, { passive: true }); // Use passive listener if not preventing default actions
 
-            // Keep shown if an element inside receives focus (e.g., color picker opened)
+                // Prevent hiding immediately if user taps *inside* the already visible container
+                buttonContainer.addEventListener('touchstart', (e) => {
+                    // e.stopPropagation(); // Optional: Prevents the document listener from also firing if needed
+                    clearTimeout(hideTimeout); // Cancel hide timer on tap inside container
+                    // Reset the timeout to keep it visible for longer after interaction
+                    hideTimeout = setTimeout(() => {
+                        const isAdminPopupVisible = adminPopup && !adminPopup.classList.contains('hidden');
+                        const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
+                        if (!isAdminPopupVisible && !hasFocusWithin) {
+                            buttonContainer.classList.add('hidden');
+                        }
+                    }, MOBILE_HIDE_DELAY); // Use mobile-specific delay
+                }, { passive: true });
+
+            } else {
+                // --- PC MOUSE LOGIC ---
+                console.log("Attaching PC Mouse Listeners"); // For debugging
+                const PC_HIDE_DELAY = 300; // 300ms for PC
+
+                // Show on mouse move near bottom edge
+                document.addEventListener('mousemove', (e) => {
+                    if (window.innerHeight - e.clientY < SHOW_ZONE) {
+                        showButtons();
+                    } else {
+                        // Don't immediately hide, let mouseleave/focusout handle it
+                        // Initiate hide check only if mouse is not over the container
+                        if (!buttonContainer.matches(':hover') && !buttonContainer.contains(document.activeElement)) {
+                             clearTimeout(hideTimeout); // Clear any previous timer
+                             hideTimeout = setTimeout(hideButtons, PC_HIDE_DELAY); // Start PC timer
+                        }
+                    }
+                });
+
+                // Keep shown while mouse is over the container
+                buttonContainer.addEventListener('mouseenter', showButtons);
+
+                // Start hide timer when mouse leaves the container
+                buttonContainer.addEventListener('mouseleave', () => {
+                     clearTimeout(hideTimeout); // Clear any previous timer
+                     hideTimeout = setTimeout(hideButtons, PC_HIDE_DELAY); // Start PC timer
+                });
+            }
+
+            // --- SHARED FOCUS LOGIC (Keep for both PC and Mobile) ---
+            // Keep shown if an element inside receives focus
             buttonContainer.addEventListener('focusin', () => {
                 // console.log("Focus inside button container, ensuring it's shown."); // Debug log
                 showButtons(); // Make sure it's shown and cancel hide timeout
             });
 
-            // When focus leaves the container, re-evaluate hiding based on mouse position
+            // When focus leaves the container, re-evaluate hiding
             buttonContainer.addEventListener('focusout', () => {
                 // console.log("Focus left button container, checking if hide needed."); // Debug log
-                 // Add a small delay to allow focus to shift between elements within the container
-                 // without triggering a hide.
-                 setTimeout(() => {
+                // Add a small delay to allow focus to shift between elements within the container
+                // without triggering a hide, then check if hide is needed.
+                // Use the appropriate delay based on device
+                const delay = isMobileTouch ? 500 : 100; // Slightly longer delay on mobile? Or keep 100ms? Test usability.
+                setTimeout(() => {
                     const hasFocusWithin = buttonContainer && buttonContainer.contains(document.activeElement);
-                    // If focus is *truly* outside now, and mouse is also outside, initiate hide check.
-                     if (!hasFocusWithin && !buttonContainer.matches(':hover')) {
-                         hideButtons();
-                     }
-                 }, 100); // Short delay
+                    const isHovering = !isMobileTouch && buttonContainer.matches(':hover');
+
+                    // If focus is *truly* outside now, and mouse is also outside (on PC), initiate hide check.
+                    if (!hasFocusWithin && !isHovering) {
+                        clearTimeout(hideTimeout); // Clear any previous timer
+                        // Use the longer mobile delay if focusout happens there? Or stick to PC's faster hide?
+                        // Let's use the standard hideButtons function which defaults to PC delay,
+                        // but a mobile tap *inside* would have set a longer MOBILE_HIDE_DELAY timer previously.
+                        // Starting a new short timer here might be okay.
+                        hideTimeout = setTimeout(hideButtons, isMobileTouch ? 500 : 300); // Start hide timer (adjust delay as needed)
+                    }
+                }, delay); // Short delay
             });
 
         } else {
             console.error("Button container not found.");
         }
+
+
+
 
 
         // ------------------------------------------------------------------
