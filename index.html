@@ -400,11 +400,31 @@
          .output-section {
              min-height: 30vh; /* Give output some minimum height */
          }
-        /* Hide the first 4 labels and print button */
-        .button-container label:nth-of-type(-n+4),
-        .print-btn {
-          display: none;
+
+        /* --- START: Mobile Button Visibility Changes --- */
+
+        /* Hide Pinyin Color, Hanzi Color, Upload, and Print buttons on mobile */
+        .button-container label:nth-of-type(3), /* Pinyin Color label */
+        .button-container label:nth-of-type(4), /* Hanzi Color label */
+        #uploadExcel,                           /* Upload button */
+        .print-btn {                             /* Print button */
+            display: none;
         }
+
+        /* Explicitly ensure the size labels are displayed on mobile */
+        /* (This overrides any potential broader hiding rules and makes intent clear) */
+        .button-container label:nth-of-type(1), /* Hanzi Size label */
+        .button-container label:nth-of-type(2)  /* Pinyin Size label */
+        {
+            display: flex; /* Or inline-flex, depending on label's desired layout */
+                           /* Using 'flex' as per your label style */
+        }
+
+        /* --- END: Mobile Button Visibility Changes --- */
+
+
+
+        
         /* Adjust button, label, and select heights */
         .button-container button,
         .button-container label,
