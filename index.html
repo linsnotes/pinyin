@@ -1641,108 +1641,107 @@
 
           // --- Attach Listeners Conditionally ---
 
-          if (isMobileTouch) {
-            // --- MOBILE TOUCH LOGIC ---
-            console.log("Attaching Mobile Touch Listeners"); // For debugging
+          // --- MOBILE TOUCH LOGIC ---
+          console.log("Attaching Mobile Touch Listeners"); // For debugging
 
-            const MOBILE_HIDE_DELAY = 5000; // 5 seconds for mobile
+          const MOBILE_HIDE_DELAY = 5000; // 5 seconds for mobile
 
-            // Show on tap near bottom edge
-            document.addEventListener(
-              "touchstart",
-              (e) => {
-                if (e.touches.length > 0) {
-                  const touchY = e.touches[0].clientY;
-                  const targetElement = e.target; // Get the element that was tapped
+          // Show on tap near bottom edge
+          document.addEventListener(
+            "touchstart",
+            (e) => {
+              if (e.touches.length > 0) {
+                const touchY = e.touches[0].clientY;
+                const targetElement = e.target; // Get the element that was tapped
 
-                  if (window.innerHeight - touchY < SHOW_ZONE) {
-                    // Tap is INSIDE the zone
-                    showButtons();
-                    // Keep shown for a period after touch near bottom
-                    clearTimeout(hideTimeout); // Clear any pending hide
-                    hideTimeout = setTimeout(() => {
-                      // Re-check conditions before hiding after touch timeout
-                      const isAdminPopupVisible =
-                        adminPopup && !adminPopup.classList.contains("hidden");
-                      const hasFocusWithin =
-                        buttonContainer &&
-                        buttonContainer.contains(document.activeElement);
-                      if (!isAdminPopupVisible && !hasFocusWithin) {
-                        buttonContainer.classList.add("hidden");
-                      }
-                    }, MOBILE_HIDE_DELAY); // Use mobile-specific delay
-                  } else if (
-                    buttonContainer &&
-                    !buttonContainer.classList.contains("hidden") &&
-                    !buttonContainer.contains(targetElement)
-                  ) {
-                    // Tap is OUTSIDE the zone AND the container is VISIBLE AND the tap is NOT on the container itself
-                    // *** REMOVED IMMEDIATE HIDE ***
-                    // Instead, let the existing timeout run its course, or let a tap *on* the container reset it.
-                    // You *could* optionally start a *shorter* hide timer here if desired, e.g.:
-                    // clearTimeout(hideTimeout);
-                    // hideTimeout = setTimeout(hideButtons, 1500); // Hide faster if tapped away
-                    // But for max stability, we'll just let the main timer handle it for now.
-                    console.log(
-                      "Tap outside zone/container (Mobile) - Immediate hide removed."
-                    ); // For debugging
-                  }
-                }
-              },
-              { passive: true }
-            ); // Use passive listener if not preventing default actions
-
-            // Prevent hiding immediately if user taps *inside* the already visible container
-            buttonContainer.addEventListener(
-              "touchstart",
-              (e) => {
-                // e.stopPropagation(); // Optional: Prevents the document listener from also firing if needed
-                clearTimeout(hideTimeout); // Cancel hide timer on tap inside container
-                // Reset the timeout to keep it visible for longer after interaction
-                hideTimeout = setTimeout(() => {
-                  const isAdminPopupVisible =
-                    adminPopup && !adminPopup.classList.contains("hidden");
-                  const hasFocusWithin =
-                    buttonContainer &&
-                    buttonContainer.contains(document.activeElement);
-                  if (!isAdminPopupVisible && !hasFocusWithin) {
-                    buttonContainer.classList.add("hidden");
-                  }
-                }, MOBILE_HIDE_DELAY); // Use mobile-specific delay
-              },
-              { passive: true }
-            );
-          } else {
-            // --- PC MOUSE LOGIC ---
-            console.log("Attaching PC Mouse Listeners"); // For debugging
-            const PC_HIDE_DELAY = 300; // 300ms for PC
-
-            // Show on mouse move near bottom edge
-            document.addEventListener("mousemove", (e) => {
-              if (window.innerHeight - e.clientY < SHOW_ZONE) {
-                showButtons();
-              } else {
-                // Don't immediately hide, let mouseleave/focusout handle it
-                // Initiate hide check only if mouse is not over the container
-                if (
-                  !buttonContainer.matches(":hover") &&
-                  !buttonContainer.contains(document.activeElement)
+                if (window.innerHeight - touchY < SHOW_ZONE) {
+                  // Tap is INSIDE the zone
+                  showButtons();
+                  // Keep shown for a period after touch near bottom
+                  clearTimeout(hideTimeout); // Clear any pending hide
+                  hideTimeout = setTimeout(() => {
+                    // Re-check conditions before hiding after touch timeout
+                    const isAdminPopupVisible =
+                      adminPopup && !adminPopup.classList.contains("hidden");
+                    const hasFocusWithin =
+                      buttonContainer &&
+                      buttonContainer.contains(document.activeElement);
+                    if (!isAdminPopupVisible && !hasFocusWithin) {
+                      buttonContainer.classList.add("hidden");
+                    }
+                  }, MOBILE_HIDE_DELAY); // Use mobile-specific delay
+                } else if (
+                  buttonContainer &&
+                  !buttonContainer.classList.contains("hidden") &&
+                  !buttonContainer.contains(targetElement)
                 ) {
-                  clearTimeout(hideTimeout); // Clear any previous timer
-                  hideTimeout = setTimeout(hideButtons, PC_HIDE_DELAY); // Start PC timer
+                  // Tap is OUTSIDE the zone AND the container is VISIBLE AND the tap is NOT on the container itself
+                  // *** REMOVED IMMEDIATE HIDE ***
+                  // Instead, let the existing timeout run its course, or let a tap *on* the container reset it.
+                  // You *could* optionally start a *shorter* hide timer here if desired, e.g.:
+                  // clearTimeout(hideTimeout);
+                  // hideTimeout = setTimeout(hideButtons, 1500); // Hide faster if tapped away
+                  // But for max stability, we'll just let the main timer handle it for now.
+                  console.log(
+                    "Tap outside zone/container (Mobile) - Immediate hide removed."
+                  ); // For debugging
                 }
               }
-            });
+            },
+            { passive: true }
+          ); // Use passive listener if not preventing default actions
 
-            // Keep shown while mouse is over the container
-            buttonContainer.addEventListener("mouseenter", showButtons);
+          // Prevent hiding immediately if user taps *inside* the already visible container
+          buttonContainer.addEventListener(
+            "touchstart",
+            (e) => {
+              // e.stopPropagation(); // Optional: Prevents the document listener from also firing if needed
+              clearTimeout(hideTimeout); // Cancel hide timer on tap inside container
+              // Reset the timeout to keep it visible for longer after interaction
+              hideTimeout = setTimeout(() => {
+                const isAdminPopupVisible =
+                  adminPopup && !adminPopup.classList.contains("hidden");
+                const hasFocusWithin =
+                  buttonContainer &&
+                  buttonContainer.contains(document.activeElement);
+                if (!isAdminPopupVisible && !hasFocusWithin) {
+                  buttonContainer.classList.add("hidden");
+                }
+              }, MOBILE_HIDE_DELAY); // Use mobile-specific delay
+            },
+            { passive: true }
+          );
 
-            // Start hide timer when mouse leaves the container
-            buttonContainer.addEventListener("mouseleave", () => {
-              clearTimeout(hideTimeout); // Clear any previous timer
-              hideTimeout = setTimeout(hideButtons, PC_HIDE_DELAY); // Start PC timer
-            });
-          }
+          // --- PC MOUSE LOGIC ---
+          console.log("Attaching PC Mouse Listeners"); // For debugging
+          const PC_HIDE_DELAY = 300; // 300ms for PC
+
+          // Show on mouse move near bottom edge
+          document.addEventListener("mousemove", (e) => {
+            if (window.innerHeight - e.clientY < SHOW_ZONE) {
+              showButtons();
+            } else {
+              // Don't immediately hide, let mouseleave/focusout handle it
+              // Initiate hide check only if mouse is not over the container
+              if (
+                !buttonContainer.matches(":hover") &&
+                !buttonContainer.contains(document.activeElement)
+              ) {
+                clearTimeout(hideTimeout); // Clear any previous timer
+                hideTimeout = setTimeout(hideButtons, PC_HIDE_DELAY); // Start PC timer
+              }
+            }
+          });
+
+          // Keep shown while mouse is over the container
+          buttonContainer.addEventListener("mouseenter", showButtons);
+
+          // Start hide timer when mouse leaves the container
+          buttonContainer.addEventListener("mouseleave", () => {
+            clearTimeout(hideTimeout); // Clear any previous timer
+            hideTimeout = setTimeout(hideButtons, PC_HIDE_DELAY); // Start PC timer
+          });
+          // --- END DEVICE-SPECIFIC LOGIC ---
 
           // --- SHARED FOCUS LOGIC (Keep for both PC and Mobile) ---
           // Keep shown if an element inside receives focus
